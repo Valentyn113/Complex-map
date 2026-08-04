@@ -42,7 +42,7 @@ namespace mrcpp {
 
 #define GET_OP_IDX(FT, GT, ID) (2 * ((GT >> ID) & 1) + ((FT >> ID) & 1))
 
-template <int D, typename T> class OperatorState final {
+template <int D, typename T, typename U> class OperatorState final {
 public:
     OperatorState(MWNode<D, T> &gn, T *scr1)
             : gNode(&gn) {
@@ -87,9 +87,9 @@ public:
     int getOperIndex(int i) const { return GET_OP_IDX(this->ft, this->gt, i); }
 
     T **getAuxData() { return this->aux; }
-    double **getOperData() { return this->oData; }
+    U **getOperData() { return this->oData; }
 
-    friend class ConvolutionCalculator<D, T>;
+    friend class ConvolutionCalculator<D, T, U>;
     friend class DerivativeCalculator<D, T>;
 
 private:
@@ -112,7 +112,7 @@ private:
     T *aux[D + 1];
     T *gData;
     T *fData;
-    double *oData[D];
+    U *oData[D];
 
     void calcMaxDeltaL() {
         const auto &gl = this->gNode->getNodeIndex();

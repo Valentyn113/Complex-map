@@ -46,8 +46,8 @@ using Eigen::MatrixXi;
 
 namespace mrcpp {
 
-template <int D, typename T>
-ConvolutionCalculator<D, T>::ConvolutionCalculator(double p, ConvolutionOperator<D> &o, FunctionTree<D, T> &f, int depth)
+template <int D, typename T, typename U>
+ConvolutionCalculator<D, T, U>::ConvolutionCalculator(double p, ConvolutionOperator<D, U> &o, FunctionTree<D, T> &f, int depth)
         : maxDepth(depth)
         , prec(p)
         , oper(&o)
@@ -57,14 +57,14 @@ ConvolutionCalculator<D, T>::ConvolutionCalculator(double p, ConvolutionOperator
     initTimers();
 }
 
-template <int D, typename T> ConvolutionCalculator<D, T>::~ConvolutionCalculator() {
+template <int D, typename T, typename U> ConvolutionCalculator<D, T, U>::~ConvolutionCalculator() {
     clearTimers();
     this->operStat.flushNodeCounters();
     println(10, this->operStat);
     for (int i = 0; i < this->bandSizes.size(); i++) { delete this->bandSizes[i]; }
 }
 
-template <int D, typename T> void ConvolutionCalculator<D, T>::initTimers() {
+template <int D, typename T, typename U> void ConvolutionCalculator<D, T, U>::initTimers() {
     int nThreads = mrcpp_get_max_threads();
     for (int i = 0; i < nThreads; i++) {
         this->band_t.push_back(new Timer(false));
@@ -73,7 +73,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::initTimers() {
     }
 }
 
-template <int D, typename T> void ConvolutionCalculator<D, T>::clearTimers() {
+template <int D, typename T, typename U> void ConvolutionCalculator<D, T, U>::clearTimers() {
     int nThreads = mrcpp_get_max_threads();
     for (int i = 0; i < nThreads; i++) {
         delete this->band_t[i];
@@ -85,7 +85,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::clearTimers() {
     this->norm_t.clear();
 }
 
-template <int D, typename T> void ConvolutionCalculator<D, T>::printTimers() const {
+template <int D, typename T, typename U> void ConvolutionCalculator<D, T, U>::printTimers() const {
     int oldprec = Printer::setPrecision(1);
     int nThreads = mrcpp_get_max_threads();
     printout(20, "\n\nthread ");
@@ -102,10 +102,10 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::printTimers() con
 
 /** Initialize the number of nodes formally within the bandwidth of an
  operator. The band size is used for thresholding. */
-template <int D, typename T> void ConvolutionCalculator<D, T>::initBandSizes() {
+template <int D, typename T, typename U> void ConvolutionCalculator<D, T, U>::initBandSizes() {
     for (int i = 0; i < this->oper->size(); i++) {
         // IMPORTANT: only 0-th dimension!
-        const OperatorTree<double> &oTree = this->oper->getComponent(i, 0);
+        const OperatorTree<U> &oTree = this->oper->getComponent(i, 0);
         const BandWidth &bw = oTree.getBandWidth();
         auto *bsize = new MatrixXi(this->maxDepth, this->nComp2 + 1);
         bsize->setZero();
@@ -118,7 +118,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::initBandSizes() {
  * of an operator. Currently this routine ignores the fact that
  * there are edges on the world box, and thus over estimates
  * the number of nodes. This is different from the previous version. */
-template <int D, typename T> void ConvolutionCalculator<D, T>::calcBandSizeFactor(MatrixXi &bs, int depth, const BandWidth &bw) {
+template <int D, typename T, typename U> void ConvolutionCalculator<D, T, U>::calcBandSizeFactor(MatrixXi &bs, int depth, const BandWidth &bw) {
     for (int gt = 0; gt < this->nComp; gt++) {
         for (int ft = 0; ft < this->nComp; ft++) {
             int k = gt * this->nComp + ft;
@@ -139,7 +139,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::calcBandSizeFacto
 }
 
 /** Return a vector of nodes in F affected by O, given a node in G */
-template <int D, typename T> MWNodeVector<D, T> *ConvolutionCalculator<D, T>::makeOperBand(const MWNode<D, T> &gNode, std::vector<NodeIndex<D>> &idx_band) {
+template <int D, typename T, typename U> MWNodeVector<D, T> *ConvolutionCalculator<D, T, U>::makeOperBand(const MWNode<D, T> &gNode, std::vector<NodeIndex<D>> &idx_band) {
     auto *band = new MWNodeVector<D, T>;
 
     int o_depth = gNode.getScale() - this->oper->getOperatorRoot();
@@ -179,7 +179,7 @@ template <int D, typename T> MWNodeVector<D, T> *ConvolutionCalculator<D, T>::ma
 }
 
 /** Recursively retrieve all reachable f-nodes within the bandwidth. */
-template <int D, typename T> void ConvolutionCalculator<D, T>::fillOperBand(MWNodeVector<D, T> *band, std::vector<NodeIndex<D>> &idx_band, NodeIndex<D> &idx, const int *nbox, int dim) {
+template <int D, typename T, typename U> void ConvolutionCalculator<D, T, U>::fillOperBand(MWNodeVector<D, T> *band, std::vector<NodeIndex<D>> &idx_band, NodeIndex<D> &idx, const int *nbox, int dim) {
     int l_start = idx[dim];
     for (int j = 0; j < nbox[dim]; j++) {
         // Recurse until dim == 0
@@ -221,14 +221,14 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::fillOperBand(MWNo
     idx[dim] = l_start;
 }
 
-template <int D, typename T> void ConvolutionCalculator<D, T>::calcNode(MWNode<D, T> &node) {
+template <int D, typename T, typename U> void ConvolutionCalculator<D, T, U>::calcNode(MWNode<D, T> &node) {
     auto &gNode = static_cast<FunctionNode<D, T> &>(node);
     gNode.zeroCoefs();
 
     int o_depth = gNode.getScale() - this->oper->getOperatorRoot();
     if (manipulateOperator and this->oper->getOperatorRoot() < 0) o_depth = gNode.getDepth();
     std::vector<T> tmpCoefs(gNode.getNCoefs());
-    OperatorState<D, T> os(gNode, tmpCoefs.data());
+    OperatorState<D, T, U> os(gNode, tmpCoefs.data());
     this->operStat.incrementGNodeCounters(gNode);
 
     // Get all nodes in f within the bandwith of O in g
@@ -274,12 +274,12 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::calcNode(MWNode<D
 }
 
 /** Apply each component (term) of the operator expansion to a node in f */
-template <int D, typename T> void ConvolutionCalculator<D, T>::applyOperComp(OperatorState<D, T> &os) {
+template <int D, typename T, typename U> void ConvolutionCalculator<D, T, U>::applyOperComp(OperatorState<D, T, U> &os) {
     double fNorm = os.fNode->getComponentNorm(os.ft);
     int o_depth = os.fNode->getScale() - this->oper->getOperatorRoot();
     for (int i = 0; i < this->oper->size(); i++) {
         // IMPORTANT: only 0-th dimension
-        const OperatorTree<double> &ot = this->oper->getComponent(i, 0);
+        const OperatorTree<U> &ot = this->oper->getComponent(i, 0);
         const BandWidth &bw = ot.getBandWidth();
         if (os.getMaxDeltaL() > bw.getMaxWidth(o_depth)) { continue; }
         os.fThreshold = getBandSizeFactor(i, o_depth, os) * fNorm;
@@ -294,7 +294,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::applyOperComp(Ope
  * Here we make use of the sparcity of matrices \f$ A, B, C \f$.
  *
  */
-template <int D, typename T> void ConvolutionCalculator<D, T>::applyOperator(int i, OperatorState<D, T> &os) {
+template <int D, typename T, typename U> void ConvolutionCalculator<D, T, U>::applyOperator(int i, OperatorState<D, T, U> &os) {
     MWNode<D, T> &gNode = *os.gNode;
     MWNode<D, T> &fNode = *os.fNode;
 
@@ -303,7 +303,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::applyOperator(int
     int o_depth = gNode.getScale() - this->oper->getOperatorRoot();
 
     double oNorm = 1.0;
-    double **oData = os.getOperData();
+    U **oData = os.getOperData();
 
     for (int d = 0; d < D; d++) {
         auto &oTree = this->oper->getComponent(i, d);
@@ -316,10 +316,10 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::applyOperator(int
         int idx = (a << 1) + b;
         if (oTree.isOutsideBand(oTransl, o_depth, idx)) { return; }
 
-        const OperatorNode<double> &oNode = oTree.getNode(o_depth, oTransl);
+        const OperatorNode<U> &oNode = oTree.getNode(o_depth, oTransl);
         int oIdx = os.getOperIndex(d);
         oNorm *= oNode.getComponentNorm(oIdx);
-        oData[d] = const_cast<double *>(oNode.getCoefs()) + oIdx * os.kp1_2;
+        oData[d] = const_cast<U *>(oNode.getCoefs()) + oIdx * os.kp1_2;
     }
     double upperBound = oNorm * os.fThreshold;
     if (upperBound > os.gThreshold) {
@@ -330,9 +330,9 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::applyOperator(int
 
 /** Perorm the required linear algebra operations in order to apply an
 operator component to a f-node in a n-dimensional tesor space. */
-template <int D, typename T> void ConvolutionCalculator<D, T>::tensorApplyOperComp(OperatorState<D, T> &os) {
+template <int D, typename T, typename U> void ConvolutionCalculator<D, T, U>::tensorApplyOperComp(OperatorState<D, T, U> &os) {
     T **aux = os.getAuxData();
-    double **oData = os.getOperData();
+    U **oData = os.getOperData();
     /*
 #ifdef HAVE_BLAS
     double mult = 0.0;
@@ -363,7 +363,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::tensorApplyOperCo
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> f(aux[i], os.kp1, os.kp1_dm1);
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> g(aux[i + 1], os.kp1_dm1, os.kp1);
         if (oData[i] != nullptr) {
-            Eigen::Map<MatrixXd> op(oData[i], os.kp1, os.kp1);
+            Eigen::Map<Eigen::Matrix<U, Eigen::Dynamic, Eigen::Dynamic>> op(oData[i], os.kp1, os.kp1);
             if (i == D - 1) { // Last dir: Add up into g
                 g.noalias() += f.transpose() * op;
             } else {
@@ -381,7 +381,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::tensorApplyOperCo
     //#endif
 }
 
-template <int D, typename T> void ConvolutionCalculator<D, T>::touchParentNodes(MWTree<D, T> &tree) const {
+template <int D, typename T, typename U> void ConvolutionCalculator<D, T, U>::touchParentNodes(MWTree<D, T> &tree) const {
     if (not manipulateOperator) {
         const auto oper_scale = this->oper->getOperatorRoot();
         auto car_prod = math_utils::cartesian_product(std::vector<int>{-1, 0}, D);
@@ -397,7 +397,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::touchParentNodes(
     }
 }
 
-template <int D, typename T> MWNodeVector<D, T> *ConvolutionCalculator<D, T>::getInitialWorkVector(MWTree<D, T> &tree) const {
+template <int D, typename T, typename U> MWNodeVector<D, T> *ConvolutionCalculator<D, T, U>::getInitialWorkVector(MWTree<D, T> &tree) const {
     auto *nodeVec = new MWNodeVector<D, T>;
     if (tree.isPeriodic()) touchParentNodes(tree);
     tree_utils::make_node_table(tree, *nodeVec);
@@ -411,5 +411,10 @@ template class ConvolutionCalculator<3, double>;
 template class ConvolutionCalculator<1, ComplexDouble>;
 template class ConvolutionCalculator<2, ComplexDouble>;
 template class ConvolutionCalculator<3, ComplexDouble>;
+
+// complex operator applied to complex function
+template class ConvolutionCalculator<1, ComplexDouble, ComplexDouble>;
+template class ConvolutionCalculator<2, ComplexDouble, ComplexDouble>;
+template class ConvolutionCalculator<3, ComplexDouble, ComplexDouble>;
 
 } // namespace mrcpp

@@ -38,7 +38,7 @@ template <int D, typename T> class ConvolutionOperator;
 
 constexpr ComplexDouble  defaultMetric [4][4] ={{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
 
-template <int D, typename T> void apply(double prec, FunctionTree<D, T> &out, ConvolutionOperator<D> &oper, FunctionTree<D, T> &inp, int maxIter = -1, bool absPrec = false);
+template <int D, typename T, typename U = double> void apply(double prec, FunctionTree<D, T> &out, ConvolutionOperator<D, U> &oper, FunctionTree<D, T> &inp, int maxIter = -1, bool absPrec = false);
 template <int D> void apply(double prec, CompFunction<D> &out, ConvolutionOperator<D> &oper, const CompFunction<D> &inp, const ComplexDouble (*metric)[4] = defaultMetric, int maxIter = -1, bool absPrec = false);
 template <int D, typename T> void apply(double prec, FunctionTree<D, T> &out, ConvolutionOperator<D> &oper, FunctionTree<D, T> &inp, FunctionTreeVector<D, T> &precTrees, int maxIter = -1, bool absPrec = false);
 template <int D, typename T> void apply(double prec, CompFunction<D> &out, ConvolutionOperator<D> &oper, CompFunction<D> &inp, FunctionTreeVector<D, T> *precTrees, ComplexDouble (*metric)[4] = nullptr, int maxIter = -1, bool absPrec = false);

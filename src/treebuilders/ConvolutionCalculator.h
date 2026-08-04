@@ -33,9 +33,9 @@
 
 namespace mrcpp {
 
-template <int D, typename T> class ConvolutionCalculator final : public TreeCalculator<D, T> {
+template <int D, typename T, typename U> class ConvolutionCalculator final : public TreeCalculator<D, T> {
 public:
-    ConvolutionCalculator(double p, ConvolutionOperator<D> &o, FunctionTree<D, T> &f, int depth = MaxDepth);
+    ConvolutionCalculator(double p, ConvolutionOperator<D, U> &o, FunctionTree<D, T> &f, int depth = MaxDepth);
     ~ConvolutionCalculator() override;
 
     MWNodeVector<D, T> *getInitialWorkVector(MWTree<D, T> &tree) const override;
@@ -51,7 +51,7 @@ private:
     double prec;
     bool manipulateOperator{false};
     bool onUnitcell{false};
-    ConvolutionOperator<D> *oper;
+    ConvolutionOperator<D, U> *oper;
     FunctionTree<D, T> *fTree;
     std::vector<Timer *> band_t;
     std::vector<Timer *> calc_t;
@@ -72,7 +72,7 @@ private:
     void printTimers() const;
 
     void initBandSizes();
-    int getBandSizeFactor(int i, int depth, const OperatorState<D, T> &os) const {
+    int getBandSizeFactor(int i, int depth, const OperatorState<D, T, U> &os) const {
         int k = os.gt * this->nComp + os.ft;
         return (*this->bandSizes[i])(depth, k);
     }
@@ -86,9 +86,9 @@ private:
         initTimers();
     }
 
-    void applyOperComp(OperatorState<D, T> &os);
-    void applyOperator(int i, OperatorState<D, T> &os);
-    void tensorApplyOperComp(OperatorState<D, T> &os);
+    void applyOperComp(OperatorState<D, T, U> &os);
+    void applyOperator(int i, OperatorState<D, T, U> &os);
+    void tensorApplyOperComp(OperatorState<D, T, U> &os);
 
     void touchParentNodes(MWTree<D, T> &tree) const;
 };

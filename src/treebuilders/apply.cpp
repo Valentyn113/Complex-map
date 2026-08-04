@@ -65,14 +65,14 @@ template <int D, typename T> void apply_on_unit_cell(bool inside, double prec, F
  * no coefs).
  *
  */
-template <int D, typename T> void apply(double prec, FunctionTree<D, T> &out, ConvolutionOperator<D> &oper, FunctionTree<D, T> &inp, int maxIter, bool absPrec) {
+template <int D, typename T, typename U> void apply(double prec, FunctionTree<D, T> &out, ConvolutionOperator<D, U> &oper, FunctionTree<D, T> &inp, int maxIter, bool absPrec) {
     if (out.getMRA() != inp.getMRA()) MSG_ABORT("Incompatible MRA");
 
     Timer pre_t;
     oper.calcBandWidths(prec);
     int maxScale = out.getMRA().getMaxScale();
     WaveletAdaptor<D, T> adaptor(prec, maxScale, absPrec);
-    ConvolutionCalculator<D, T> calculator(prec, oper, inp);
+    ConvolutionCalculator<D, T, U> calculator(prec, oper, inp);
     pre_t.stop();
     TreeBuilder<D, T> builder;
     builder.build(out, calculator, adaptor, maxIter);
@@ -576,6 +576,11 @@ template FunctionTreeVector<3, double> gradient<3>(DerivativeOperator<3> &oper, 
 template void apply<1, ComplexDouble>(double prec, FunctionTree<1, ComplexDouble> &out, ConvolutionOperator<1> &oper, FunctionTree<1, ComplexDouble> &inp, int maxIter, bool absPrec);
 template void apply<2, ComplexDouble>(double prec, FunctionTree<2, ComplexDouble> &out, ConvolutionOperator<2> &oper, FunctionTree<2, ComplexDouble> &inp, int maxIter, bool absPrec);
 template void apply<3, ComplexDouble>(double prec, FunctionTree<3, ComplexDouble> &out, ConvolutionOperator<3> &oper, FunctionTree<3, ComplexDouble> &inp, int maxIter, bool absPrec);
+
+// complex operator applied to complex function
+template void apply<1, ComplexDouble, ComplexDouble>(double prec, FunctionTree<1, ComplexDouble> &out, ConvolutionOperator<1, ComplexDouble> &oper, FunctionTree<1, ComplexDouble> &inp, int maxIter, bool absPrec);
+template void apply<2, ComplexDouble, ComplexDouble>(double prec, FunctionTree<2, ComplexDouble> &out, ConvolutionOperator<2, ComplexDouble> &oper, FunctionTree<2, ComplexDouble> &inp, int maxIter, bool absPrec);
+template void apply<3, ComplexDouble, ComplexDouble>(double prec, FunctionTree<3, ComplexDouble> &out, ConvolutionOperator<3, ComplexDouble> &oper, FunctionTree<3, ComplexDouble> &inp, int maxIter, bool absPrec);
 
 template void apply<1, ComplexDouble>(double prec,
                                       FunctionTree<1, ComplexDouble> &out,

@@ -87,7 +87,7 @@ template <int D, typename T = double> class DefaultCalculator;
 template <int D, typename T = double> class ProjectionCalculator;
 template <int D, typename T = double> class AdditionCalculator;
 template <int D, typename T = double> class MultiplicationCalculator;
-template <int D, typename T = double> class ConvolutionCalculator;
+template <int D, typename T = double, typename U = double> class ConvolutionCalculator;
 template <int D, typename T = double> class DerivativeCalculator;
 class CrossCorrelationCalculator;
 
@@ -100,7 +100,7 @@ template <int D, typename T = double> class TreeIterator;
 template <int D, typename T = double> class IteratorNode;
 
 class BandWidth;
-template <int D, typename T = double> class OperatorState;
+template <int D, typename T = double, typename U = double> class OperatorState;
 
 template <int D> using Coord = std::array<double, D>;
 template <int D, typename T = double> using MWNodeVector = std::vector<MWNode<D, T> *>;
