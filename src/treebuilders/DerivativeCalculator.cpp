@@ -186,8 +186,10 @@ template <int D, typename T> void DerivativeCalculator<D, T>::applyOperator_bw0(
 
     ComplexDouble **oData = os.getOperData();
 
+    os.setOperIsReal(true);
     for (int d = 0; d < D; d++) {
         const OperatorTree &oTree = this->oper->getComponent(0, d);
+        if (not oTree.isreal()) os.setOperIsReal(false);
         const OperatorNode &oNode = oTree.getNode(depth, 0);
         int oIdx = os.getOperIndex(d);
         if (this->applyDir == d) {
@@ -217,8 +219,10 @@ template <int D, typename T> void DerivativeCalculator<D, T>::applyOperator(Oper
 
     ComplexDouble **oData = os.getOperData();
 
+    os.setOperIsReal(true);
     for (int d = 0; d < D; d++) {
         const OperatorTree &oTree = this->oper->getComponent(0, d);
+        if (not oTree.isreal()) os.setOperIsReal(false);
 
         int oTransl = fIdx[d] - gIdx[d];
 
@@ -257,12 +261,33 @@ template <int D, typename T> void DerivativeCalculator<D, T>::tensorApplyOperCom
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> f(aux[i], os.kp1, os.kp1_dm1);
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> g(aux[i + 1], os.kp1_dm1, os.kp1);
         if (oData[i] != nullptr) {
-            const auto op = detail::OperBandMap<T>::get(oData[i], os.kp1);
-            if (i == D - 1) { // Last dir: Add up into g
-                g.noalias() += f.transpose() * op;
-            } else {
-                g.noalias() = f.transpose() * op;
-            }
+            const bool accumulate = (i == D - 1); // Last dir: Add up into g
+            if constexpr (std::is_same<T, ComplexDouble>::value) {
+                if (os.operIsReal()) {
+                    const auto op = detail::real_band(oData[i], os.kp1);
+                    if (accumulate) {
+                        g.noalias() += f.transpose() * op;
+                    } else {
+                        g.noalias() = f.transpose() * op;
+                    }
+                } else {
+                    const auto op = detail::complex_band(oData[i], os.kp1);
+                    if (accumulate) {
+                        g.noalias() += f.transpose() * op;
+                    } else {
+                        g.noalias() = f.transpose() * op;
+                    }
+                }
+            } else if constexpr (std::is_same<T, double>::value) {
+                // A real function tree only reaches here with a real kernel (guarded in apply)
+                const auto op = detail::real_band(oData[i], os.kp1);
+                if (accumulate) {
+                    g.noalias() += f.transpose() * op;
+                } else {
+                    g.noalias() = f.transpose() * op;
+                }
+            } else
+                NOT_IMPLEMENTED_ABORT;
         } else {
             // Identity operator in direction i
             if (i == D - 1) { // Last dir: Add up into g

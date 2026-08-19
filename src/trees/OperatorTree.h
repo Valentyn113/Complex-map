@@ -39,6 +39,14 @@ public:
 
     double getNormPrecision() const { return this->normPrec; }
 
+    /** Coefficients are always stored as ComplexDouble, but most kernels
+     *  (Poisson, Helmholtz, derivatives, identity) are real. Mirrors the
+     *  isreal/iscomplex convention of CompFunctionData. */
+    int isreal() const { return this->real_kernel; }
+    int iscomplex() const { return not this->real_kernel; }
+    void defreal() { this->real_kernel = 1; }
+    void defcomplex() { this->real_kernel = 0; }
+
     void clearBandWidth();
     virtual void calcBandWidth(double prec = -1.0);
     virtual bool isOutsideBand(int oTransl, int o_depth, int idx);
@@ -64,6 +72,7 @@ public:
 
 protected:
     const double normPrec;
+    int real_kernel{1}; ///< 1: imaginary part is structurally zero
     BandWidth *bandWidth;
     OperatorNode ***nodePtrStore;  ///< Avoids tree lookups
     OperatorNode ***nodePtrAccess; ///< Center (l=0) of node list

@@ -118,6 +118,7 @@ template <int D> void TimeEvolutionOperator<D>::initialize(double time, int max_
     double o_prec = this->build_prec;
     auto o_mra = this->getOperatorMRA();
     auto o_tree = std::make_unique<CornerOperatorTree>(o_mra, o_prec);
+    o_tree->defcomplex(); // the Schrodinger semigroup kernel is genuinely complex
 
     std::map<int, JpowerIntegrals *> J;
     for (int n = 0; n <= N + 1; n++) J[n] = new JpowerIntegrals(time * std::pow(4, n), n, max_Jpower);
@@ -164,6 +165,7 @@ template <int D> void TimeEvolutionOperator<D>::initialize(double time, int fine
     TimeEvolution_CrossCorrelationCalculator calculator(J, this->cross_correlation);
 
     auto o_tree = std::make_unique<CornerOperatorTree>(o_mra, o_prec);
+    o_tree->defcomplex(); // the Schrodinger semigroup kernel is genuinely complex
     builder.build(*o_tree, calculator, uniform, N); // Expand 1D kernel into 2D operator
 
     // Postprocess to make the operator functional
@@ -199,6 +201,7 @@ template <int D> void TimeEvolutionOperator<D>::initializeSemiUniformly(double t
     int N = 18;
 
     auto o_tree = std::make_unique<CornerOperatorTree>(o_mra, o_prec);
+    o_tree->defcomplex(); // the Schrodinger semigroup kernel is genuinely complex
     DefaultCalculator<2, ComplexDouble> intitial_calculator;
     for (auto n = 0; n < 4; n++) builder.build(*o_tree, intitial_calculator, uniform, 1);
 

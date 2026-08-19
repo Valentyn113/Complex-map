@@ -56,6 +56,13 @@ public:
     void calcBandWidths(double prec);
     void clearBandWidths();
 
+    int isreal() const {
+        for (const auto &t : this->raw_exp)
+            if (not t->isreal()) return 0;
+        return 1;
+    }
+    int iscomplex() const { return not isreal(); }
+
     int getOperatorRoot() const { return this->oper_root; }
     int getOperatorReach() const { return this->oper_reach; }
 

@@ -42,28 +42,23 @@ namespace mrcpp {
 
 namespace detail {
 
-/** @brief Map one operator band with the scalar type of the function tree it multiplies.
+/** @brief Views onto one operator band.
  *
- * Operator coefficients are stored as ComplexDouble unconditionally. A real
- * function tree can only be convolved with a real kernel, so for T = double we
- * map the real parts in place with an inner stride of 2; this is well defined
- * because std::complex<double> is layout-compatible with double[2] ([complex.numbers.general]).
- * Flop count on the real path is therefore unchanged; only the load pattern is strided.
+ * Operator coefficients are stored as ComplexDouble unconditionally, but most
+ * kernels are real (OperatorTree::isreal). real_band maps the real parts in
+ * place with an inner stride of 2, which is well defined because
+ * std::complex<double> is layout-compatible with double[2]; the contraction
+ * then keeps the real flop count and mixes scalars the same way
+ * math_utils::apply_filter mixes a real MW filter with T-valued coefficients.
  */
-template <typename T> struct OperBandMap;
-
-template <> struct OperBandMap<ComplexDouble> {
-    using Type = Eigen::Map<const Eigen::MatrixXcd>;
-    static Type get(const ComplexDouble *o, int kp1) { return Type(o, kp1, kp1); }
-};
-
-template <> struct OperBandMap<double> {
+inline Eigen::Map<const Eigen::MatrixXd, Eigen::Unaligned, Eigen::Stride<Eigen::Dynamic, 2>> real_band(const ComplexDouble *o, int kp1) {
     using StrideType = Eigen::Stride<Eigen::Dynamic, 2>;
-    using Type = Eigen::Map<const Eigen::MatrixXd, Eigen::Unaligned, StrideType>;
-    static Type get(const ComplexDouble *o, int kp1) {
-        return Type(reinterpret_cast<const double *>(o), kp1, kp1, StrideType(2 * kp1, 2));
-    }
-};
+    return {reinterpret_cast<const double *>(o), kp1, kp1, StrideType(2 * kp1, 2)};
+}
+
+inline Eigen::Map<const Eigen::MatrixXcd> complex_band(const ComplexDouble *o, int kp1) {
+    return {o, kp1, kp1};
+}
 
 } // namespace detail
 
@@ -111,6 +106,8 @@ public:
     }
 
     int getMaxDeltaL() const { return this->maxDeltaL; }
+    bool operIsReal() const { return this->oper_real; }
+    void setOperIsReal(bool r) { this->oper_real = r; }
     int getOperIndex(int i) const { return GET_OP_IDX(this->ft, this->gt, i); }
 
     T **getAuxData() { return this->aux; }
@@ -124,6 +121,7 @@ private:
     int gt;
 
     int maxDeltaL;
+    bool oper_real{true};
     double fThreshold;
     double gThreshold;
     // Shorthands
