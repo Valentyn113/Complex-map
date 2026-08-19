@@ -29,7 +29,7 @@
 #include "utils/Printer.h"
 
 using Eigen::MatrixXd;
-using Eigen::VectorXd;
+using Eigen::VectorXcd;
 
 namespace mrcpp {
 
@@ -77,7 +77,7 @@ void TimeEvolution_CrossCorrelationCalculator::applyCcc(MWNode<2, ComplexDouble>
     int t_dim = node.getTDim();  // t_dim = 4
     int kp1_d = node.getKp1_d(); // kp1_d = (k + 1)^2
 
-    VectorXd vec_o = VectorXd::Zero(t_dim * kp1_d);
+    VectorXcd vec_o = VectorXcd::Zero(t_dim * kp1_d);
     const NodeIndex<2> &idx = node.getNodeIndex();
 
     auto &J_power_inetgarls = *this->J_power_inetgarls[node.getScale() + 1];
@@ -92,11 +92,7 @@ void TimeEvolution_CrossCorrelationCalculator::applyCcc(MWNode<2, ComplexDouble>
                 // std::min(M, N)  could be used for breaking the following loop
                 // this->cross_correlation->Matrix.size() should be big enough a priori
                 for (size_t k = 0; 2 * k + p + j < J_power_inetgarls[l_b].size(); k++) {
-                    double J;
-                    if (this->imaginary)
-                        J = J_power_inetgarls[l_b][2 * k + p + j].imag();
-                    else
-                        J = J_power_inetgarls[l_b][2 * k + p + j].real();
+                    const ComplexDouble J = J_power_inetgarls[l_b][2 * k + p + j];
                     vec_o.segment(i * kp1_d, kp1_d)(vec_o_segment_index) += J * cross_correlation->Matrix[k](p, j); // by default eigen library reads a transpose matrix from a file
                 }
                 vec_o_segment_index++;

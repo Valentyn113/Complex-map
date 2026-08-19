@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include "ConvolutionOperator.h"
 #include "MWOperator.h"
 #include "core/SchrodingerEvolution_CrossCorrelation.h"
@@ -51,8 +53,8 @@ template <int D>
 class TimeEvolutionOperator : public ConvolutionOperator<D> // One can use ConvolutionOperator instead as well
 {
 public:
-    TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, int finest_scale, bool imaginary, int max_Jpower = 30);
-    TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, bool imaginary, int max_Jpower = 30);
+    /** finest_scale unset -> adaptive construction; set -> uniform down to that scale. */
+    TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, std::optional<int> finest_scale = std::nullopt, int max_Jpower = 30);
     TimeEvolutionOperator(const TimeEvolutionOperator &oper) = delete;
     TimeEvolutionOperator &operator=(const TimeEvolutionOperator &oper) = delete;
     virtual ~TimeEvolutionOperator() = default;
@@ -60,9 +62,9 @@ public:
     double getBuildPrec() const { return this->build_prec; }
 
 protected:
-    void initialize(double time, int finest_scale, bool imaginary, int max_Jpower);
-    void initialize(double time, bool imaginary, int max_Jpower);
-    void initializeSemiUniformly(double time, bool imaginary, int max_Jpower);
+    void initialize(double time, int finest_scale, int max_Jpower);
+    void initialize(double time, int max_Jpower);
+    void initializeSemiUniformly(double time, int max_Jpower);
 
     void setBuildPrec(double prec) { this->build_prec = prec; }
 
