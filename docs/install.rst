@@ -1,42 +1,59 @@
+============
+Installation
+============
+
 ------------------
 Obtaining the code
 ------------------
 
-The latest version of MRCPP is available on `GitHub
-<http://github.com/MRChemSoft/mrcpp>`_::
+The latest development version of MRCPP can be found on the ``master``
+branch on GitHub::
 
-    $ git clone git@github.com:MRChemSoft/mrcpp.git
+    $ git clone https://github.com/MRChemSoft/mrcpp.git
+
+The released versions can be found from Git tags ``vX.Y.Z`` under the
+``release/X.Y`` branches in the same repository, or a zip file can be
+downloaded from `Zenodo <https://doi.org/10.5281/zenodo.3606670>`_.
+
+By default, all dependencies will be **fetched** at configure time if they are
+not already available.
+
+
+-------------------
+Build prerequisites
+-------------------
+
+- CMake-3.22 (or later)
+- GNU-11.2, Clang-14.0 or IntelLLVM-2022.1 (or later) compilers (C++17 standard)
+
+.. hint::
+    We have collected the recommended modules for the different Norwegian HPC
+    systems under ``tools/<machine>.env``. These files can be sourced in order
+    to get a working environment on the respective machines, and may also serve
+    as a guide for other HPC systems.
+  
+
+C++ dependencies
+----------------
+
+- Linear algebra: `Eigen-3.4  <https://gitlab.com/libeigen/eigen>`_
+
+Eigen will be downloaded automatically at configure time by CMake,
+but can also be linked manually by setting the variable::
+
+    EIGEN3_DIR=<path_to_eigen3>/share/eigen3/cmake
 
 
 -----------------
 Building the code
 -----------------
 
+Configure
+---------
 
-Prerequisites
--------------
-
-* g++-5.4 or later (``std=c++14``)
-* `CMake <http://cmake.org>`_ version 3.11 or higher.
-* `Eigen <http://eigen.tuxfamily.org>`_ version 3.3 or higher.
-* BLAS (optional)
-
-
-Configuration
--------------
-
-The configuration and build process is managed through CMake, and a ``setup``
-script is provided for the configuration step. MRCPP's only dependency is
-Eigen3, which will be downloaded at configure time unless it is already
-available on the system. If you have a local version *not* under the system
-path, you can point to it before running ``setup``::
-
-    $ export EIGEN3_ROOT=/path/to/eigen3
-    $ ./setup [options] [<builddir>]
-
-The setup script will create a directory called *<builddir>* (default ``build``)
-and run CMake. There are several options available for the setup, and the most
-important are:
+The ``setup`` script will create a directory called ``<build-dir>`` and run
+CMake. There are several options available for the setup, the most
+important being:
 
 ``--cxx=<CXX>``
   C++ compiler [default: g++]
@@ -55,29 +72,101 @@ important are:
 ``-h --help``
   List all options
 
+The code can be built with four levels of parallelization:
 
-Compilation
------------
+ - no parallelization
+ - only shared memory (OpenMP)
+ - only distributed memory (MPI)
+ - hybrid OpenMP + MPI
 
-After successful configuration, the code is compiled using the ``make`` command
-in the *<builddir>* directory::
+.. note::
+    In practice we recommend the **shared memory version** for running on your
+    personal laptop/workstation, and the **hybrid version** for running on a
+    HPC cluster. The serial and pure MPI versions are only useful for debugging.
 
-    $ cd <builddir>
+The default build is *without* parallelization and using GNU compilers::
+
+    $ ./setup --prefix=<install-dir> <build-dir>
+
+To use clang compilers you need to specify the ``--cxx`` option::
+
+    $ ./setup --prefix=<install-dir> --cxx=clang++ <build-dir>
+
+To build the code with shared memory (OpenMP) parallelization,
+add the ``--omp`` option::
+
+    $ ./setup --prefix=<install-dir> --omp <build-dir>
+
+To build the code with distributed memory (MPI) parallelization, add the
+``--mpi`` option *and* change to the respective MPI compilers (``--cxx=mpicxx``
+for GNU)::
+
+    $ ./setup --prefix=<install-dir> --omp --mpi --cxx=mpicxx <build-dir>
+
+.. note::
+    If you compile the MRCPP library manually as a separate project, the level
+    of parallelization **must be the same** for MRCPP and MRChem. Similar
+    options apply for the MRCPP setup, see
+    `mrcpp.readthedocs.io <https://mrcpp.readthedocs.io/en/latest/>`_.
+
+
+Build
+-----
+
+If the CMake configuration is successful, the code is compiled with::
+
+    $ cd <build-dir>
     $ make
 
 
--------------
-Running tests
--------------
+Test
+----
 
-A set of tests is provided with the code to verify that the code compiled
-properly. To compile the test suite, add the ``--enable-tests`` option to
-setup, then run the tests with ``ctest``::
+A test suite is provided to make sure that everything compiled properly.
+To run a collection of small tests::
 
-    $ ./setup --enable-tests build
-    $ cd build
-    $ make
+    $ cd <build-dir>
     $ ctest
+
+
+Install
+-------
+
+After the build has been verified with the test suite, it can be installed with
+the following command::
+
+    $ cd <build-dir>
+    $ make install
+
+Now libraries, headers and CMake configuration files can be found under the
+given prefix::
+
+    mrcpp/
+    ├── include/
+    │   └── MRCPP/
+    ├── lib64/
+    │   ├── libmrcpp.a
+    │   ├── libmrcpp.so -> libmrcpp.so.1*
+    │   └── libmrcpp.so.1*
+    └── share/
+        └── cmake/
+
+Please refer to the :ref:`User's Manual` for instructions for how to run the program.
+
+.. hint::
+    We have collected scripts for configure and build of the hybrid OpenMP + MPI
+    version on the different Norwegian HPC systems under ``tools/<machine>.sh``.
+    These scripts will build the current version under ``build-${version}``,
+    run the unit tests and install under ``install-${version}``, e.g. to build
+    version v1.5.0 on Olivia::
+
+        $ cd mrcpp
+        $ git checkout v1.5.0
+        $ tools/olivia.sh
+
+    The configure step requires internet access, so the scripts must be run on
+    the login nodes, and it will run on a single core, so it might take some
+    minutes to complete. 
 
 
 ----------------
@@ -127,6 +216,7 @@ Note that the core of MRCPP is *only* OpenMP parallelized. All MPI data or work
 distribution must be done manually in the application program, using the tools
 provided by MRCPP (see the Parallel section of the API).
 
+
 ----------
 Pilot code
 ----------
@@ -143,32 +233,6 @@ Now a corresponding executable will be build in ``<builddir>/bin/mrcpp-pilot/``.
 Feel free to do whatever you like in your own pilot code, but please don't add
 this file to git. Also, please don't commit any changes to the existing examples
 (unless you know what you're doing).
-
----------------------
-MRCPP as a dependency
----------------------
-
-Building MRCPP provides CMake configuration files exporting the libraries and
-headers as targets to be consumed by third-party projects also using CMake::
-
-    $ ./setup --prefix=$HOME/Software/mrcpp
-    $ cd build
-    $ make
-    $ ctest
-    $ make install
-
-Now libraries, headers and CMake configuration files can be found under the
-given prefix::
-
-    mrcpp/
-    ├── include/
-    │   └── MRCPP/
-    ├── lib64/
-    │   ├── libmrcpp.a
-    │   ├── libmrcpp.so -> libmrcpp.so.1*
-    │   └── libmrcpp.so.1*
-    └── share/
-        └── cmake/
 
 As an example, the ``pilot`` sample can be built with the following ``CMakeLists.txt``:
 
