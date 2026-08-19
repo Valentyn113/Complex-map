@@ -58,7 +58,7 @@ void CornerOperatorTree::calcBandWidth(double prec) {
 
         while (not done) {
             done = true;
-            MWNode<2> *node = findNode(NodeIndex<2>(depth, {l, 0}));
+            MWNode<2, ComplexDouble> *node = findNode(NodeIndex<2>(depth, {l, 0}));
             for (int k = 1; k < 4; k++) {
                 if ((node != nullptr) && (node->getComponentNorm(k) > thrs)) {
                     this->bandWidth->setWidth(depth, k, l);

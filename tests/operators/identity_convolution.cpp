@@ -79,7 +79,7 @@ TEST_CASE("Initialize identity convolution operator", "[init_identity], [identit
                 InterpolatingBasis basis(k);
                 MultiResolutionAnalysis<2> oper_mra(box, basis);
 
-                TreeBuilder<2> builder;
+                TreeBuilder<2, ComplexDouble> builder;
                 OperatorAdaptor adaptor(ccc_prec, oper_mra.getMaxScale());
                 CrossCorrelationCalculator calculator(kern_tree);
 

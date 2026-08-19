@@ -46,7 +46,7 @@ PHOperator<D>::PHOperator(const MultiResolutionAnalysis<D> &mra, int order)
 template <int D> void PHOperator<D>::initialize() {
     auto o_mra = this->getOperatorMRA();
 
-    TreeBuilder<2> builder;
+    TreeBuilder<2, ComplexDouble> builder;
 
     auto &basis = this->MRA.getScalingBasis();
     PHCalculator calculator(basis, this->order);

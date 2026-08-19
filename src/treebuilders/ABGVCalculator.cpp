@@ -101,7 +101,7 @@ void ABGVCalculator::calcKMatrix(const ScalingBasis &basis) {
     }
 }
 
-void ABGVCalculator::calcNode(MWNode<2> &node) {
+void ABGVCalculator::calcNode(MWNode<2, ComplexDouble> &node) {
     node.zeroCoefs();
 
     const auto &idx = node.getNodeIndex();
@@ -109,7 +109,7 @@ void ABGVCalculator::calcNode(MWNode<2> &node) {
     int kp1 = node.getKp1();
     int kp1_d = node.getKp1_d();
     double two_np1 = std::pow(2.0, np1);
-    double *coefs = node.getCoefs();
+    ComplexDouble *coefs = node.getCoefs();
 
     double a = this->A;
     double b = this->B;

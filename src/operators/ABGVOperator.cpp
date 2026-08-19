@@ -56,7 +56,7 @@ template <int D> void ABGVOperator<D>::initialize(double a, double b) {
 
     auto oper_mra = this->getOperatorMRA();
 
-    TreeBuilder<2> builder;
+    TreeBuilder<2, ComplexDouble> builder;
     ABGVCalculator calculator(oper_mra.getScalingBasis(), a, b);
     BandWidthAdaptor adaptor(bw, oper_mra.getMaxScale());
 

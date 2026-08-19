@@ -40,7 +40,7 @@ namespace mrcpp {
  *
  *
  */
-void TimeEvolution_CrossCorrelationCalculator::calcNode(MWNode<2> &node) {
+void TimeEvolution_CrossCorrelationCalculator::calcNode(MWNode<2, ComplexDouble> &node) {
     node.zeroCoefs();
     int type = node.getMWTree().getMRA().getScalingBasis().getScalingType();
     switch (type) {
@@ -69,7 +69,7 @@ void TimeEvolution_CrossCorrelationCalculator::calcNode(MWNode<2> &node) {
  *
  */
 // template <int T>
-void TimeEvolution_CrossCorrelationCalculator::applyCcc(MWNode<2> &node) {
+void TimeEvolution_CrossCorrelationCalculator::applyCcc(MWNode<2, ComplexDouble> &node) {
     // std::cout << node;
     //  The scale of J power integrals:
     // int scale = node.getScale() + 1;  //scale = n = (n - 1) + 1
@@ -103,7 +103,7 @@ void TimeEvolution_CrossCorrelationCalculator::applyCcc(MWNode<2> &node) {
             }
     }
 
-    double *coefs = node.getCoefs();
+    ComplexDouble *coefs = node.getCoefs();
     for (int i = 0; i < t_dim * kp1_d; i++) {
         // auto scaling_factor = node.getMWTree().getMRA().getWorldBox().getScalingFactor(0);
         coefs[i] = vec_o(i);

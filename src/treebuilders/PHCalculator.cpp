@@ -79,7 +79,7 @@ void PHCalculator::readSMatrix(const ScalingBasis &basis, char n) {
     }
 }
 
-void PHCalculator::calcNode(MWNode<2> &node) {
+void PHCalculator::calcNode(MWNode<2, ComplexDouble> &node) {
     node.zeroCoefs();
 
     const auto &idx = node.getNodeIndex();
@@ -88,7 +88,7 @@ void PHCalculator::calcNode(MWNode<2> &node) {
     int kp1 = node.getKp1();
     int kp1_d = node.getKp1_d();
     double two_np1 = std::pow(2.0, this->diff_order * np1);
-    double *coefs = node.getCoefs();
+    ComplexDouble *coefs = node.getCoefs();
 
     switch (l) {
         case 1:

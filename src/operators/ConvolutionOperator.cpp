@@ -79,7 +79,7 @@ template <int D> void ConvolutionOperator<D>::initialize(GaussExp<1> &kernel, do
     auto k_mra = this->getKernelMRA();
     auto o_mra = this->getOperatorMRA();
 
-    TreeBuilder<2> builder;
+    TreeBuilder<2, ComplexDouble> builder;
     OperatorAdaptor adaptor(o_prec, o_mra.getMaxScale());
 
     for (size_t i = 0; i < kernel.size(); i++) {

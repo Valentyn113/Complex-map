@@ -36,7 +36,7 @@ using namespace Eigen;
 namespace mrcpp {
 
 OperatorTree::OperatorTree(const MultiResolutionAnalysis<2> &mra, double np, const std::string &name)
-        : MWTree<2>(mra, name)
+        : MWTree<2, ComplexDouble>(mra, name)
         , normPrec(np)
         , bandWidth(nullptr)
         , nodePtrStore(nullptr)
@@ -45,7 +45,7 @@ OperatorTree::OperatorTree(const MultiResolutionAnalysis<2> &mra, double np, con
 
     int nodesPerChunk = 1024;
     int coefsPerNode = this->getTDim() * this->getKp1_d();
-    this->nodeAllocator_p = std::make_unique<NodeAllocator<2>>(this, nullptr, coefsPerNode, nodesPerChunk);
+    this->nodeAllocator_p = std::make_unique<NodeAllocator<2, ComplexDouble>>(this, nullptr, coefsPerNode, nodesPerChunk);
     this->allocRootNodes();
     this->resetEndNodeTable();
 }
@@ -61,7 +61,7 @@ void OperatorTree::allocRootNodes() {
     auto *coef_p = allocator.getCoef_p(sIdx);
     auto *root_p = allocator.getNode_p(sIdx);
 
-    MWNode<2> **roots = rootbox.getNodes();
+    MWNode<2, ComplexDouble> **roots = rootbox.getNodes();
     for (int rIdx = 0; rIdx < nRoots; rIdx++) {
         // construct into allocator memory
         new (root_p) OperatorNode(this, rIdx);
@@ -119,7 +119,7 @@ void OperatorTree::calcBandWidth(double prec) {
         bool done = false;
         while (not done) {
             done = true;
-            MWNode<2> &node = getNode(depth, l);
+            MWNode<2, ComplexDouble> &node = getNode(depth, l);
             double thrs = std::max(MachinePrec, prec / (8.0 * (1 << depth)));
             for (int k = 0; k < 4; k++) {
                 if (node.getComponentNorm(k) > thrs) {
@@ -160,8 +160,8 @@ bool OperatorTree::isOutsideBand(int oTransl, int o_depth, int idx) {
  *
  */
 void OperatorTree::removeRoughScaleNoise(int trust_scale) {
-    MWNode<2> *p_rubbish;     // possibly inexact end node
-    MWNode<2> *p_counterpart; // exact branch node
+    MWNode<2, ComplexDouble> *p_rubbish;     // possibly inexact end node
+    MWNode<2, ComplexDouble> *p_counterpart; // exact branch node
     for (int n = (this->getDepth() - 2 < trust_scale) ? this->getDepth() - 2 : trust_scale; n > this->getRootScale(); n--) {
         int N = 1 << n;
         for (int m = 0; m < N; m++)
@@ -182,7 +182,7 @@ void OperatorTree::removeRoughScaleNoise(int trust_scale) {
 void OperatorTree::getMaxTranslations(VectorXi &maxTransl) {
     int nScales = this->nodesAtDepth.size();
     maxTransl = VectorXi::Zero(nScales);
-    TreeIterator<2> it(*this);
+    TreeIterator<2, ComplexDouble> it(*this);
     while (it.next()) {
         int n = it.getNode().getDepth();
         const NodeIndex<2> &l = it.getNode().getNodeIndex();
@@ -214,7 +214,7 @@ void OperatorTree::setupOperNodeCache() {
         for (int i = n_transl; i >= 0; i--) {
             NodeIndex<2> idx(scale, {0, i});
             // Generated OperatorNodes are still OperatorNodes
-            if (auto *oNode = dynamic_cast<OperatorNode *>(&MWTree<2>::getNode(idx))) {
+            if (auto *oNode = dynamic_cast<OperatorNode *>(&MWTree<2, ComplexDouble>::getNode(idx))) {
                 nodes[j] = oNode;
                 j++;
             } else {
@@ -223,7 +223,7 @@ void OperatorTree::setupOperNodeCache() {
         }
         for (int i = 1; i <= n_transl; i++) {
             NodeIndex<2> idx(scale, {i, 0});
-            if (auto *oNode = dynamic_cast<OperatorNode *>(&MWTree<2>::getNode(idx))) {
+            if (auto *oNode = dynamic_cast<OperatorNode *>(&MWTree<2, ComplexDouble>::getNode(idx))) {
                 nodes[j] = oNode;
                 j++;
             } else {
@@ -252,13 +252,13 @@ void OperatorTree::clearOperNodeCache() {
  * of OperatorNorm is done using random vectors, which is non-deterministic
  * in parallel. FunctionTrees should be fine. */
 void OperatorTree::mwTransformUp() {
-    std::vector<MWNodeVector<2>> nodeTable;
+    std::vector<MWNodeVector<2, ComplexDouble>> nodeTable;
     tree_utils::make_node_table(*this, nodeTable);
     int start = nodeTable.size() - 2;
     for (int n = start; n >= 0; n--) {
         int nNodes = nodeTable[n].size();
         for (int i = 0; i < nNodes; i++) {
-            MWNode<2> &node = *nodeTable[n][i];
+            MWNode<2, ComplexDouble> &node = *nodeTable[n][i];
             if (node.isBranchNode()) { node.reCompress(); }
         }
     }
@@ -271,12 +271,12 @@ void OperatorTree::mwTransformUp() {
  * of OperatorNorm is done using random vectors, which is non-deterministic
  * in parallel. FunctionTrees should be fine. */
 void OperatorTree::mwTransformDown(bool overwrite) {
-    std::vector<MWNodeVector<2>> nodeTable;
+    std::vector<MWNodeVector<2, ComplexDouble>> nodeTable;
     tree_utils::make_node_table(*this, nodeTable);
     for (auto &n : nodeTable) {
         int n_nodes = n.size();
         for (int i = 0; i < n_nodes; i++) {
-            MWNode<2> &node = *n[i];
+            MWNode<2, ComplexDouble> &node = *n[i];
             if (node.isBranchNode()) { node.giveChildrenCoefs(overwrite); }
         }
     }
@@ -284,7 +284,7 @@ void OperatorTree::mwTransformDown(bool overwrite) {
 
 std::ostream &OperatorTree::print(std::ostream &o) const {
     o << std::endl << "*OperatorTree: " << this->name << std::endl;
-    return MWTree<2>::print(o);
+    return MWTree<2, ComplexDouble>::print(o);
 }
 
 } // namespace mrcpp

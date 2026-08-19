@@ -94,7 +94,7 @@ TEST_CASE("Helmholtz' kernel", "[init_helmholtz], [helmholtz_operator], [mw_oper
                 InterpolatingBasis oper_basis(k);
                 MultiResolutionAnalysis<2> oper_mra(oper_box, oper_basis);
 
-                TreeBuilder<2> builder;
+                TreeBuilder<2, ComplexDouble> builder;
                 OperatorAdaptor adaptor(ccc_prec, oper_mra.getMaxScale());
 
                 for (size_t i = 0; i < K.size(); i++) {

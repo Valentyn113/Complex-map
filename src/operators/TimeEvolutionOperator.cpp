@@ -137,7 +137,7 @@ template <int D> void TimeEvolutionOperator<D>::initialize(double time, bool ima
 
     OperatorAdaptor adaptor(o_prec, o_mra.getMaxScale(), true);
 
-    mrcpp::TreeBuilder<2> builder;
+    mrcpp::TreeBuilder<2, ComplexDouble> builder;
     builder.build(*o_tree, calculator, adaptor, N);
 
     // Postprocess to make the operator functional
@@ -166,8 +166,8 @@ template <int D> void TimeEvolutionOperator<D>::initialize(double time, int fine
     auto o_mra = this->getOperatorMRA();
 
     // Setup uniform tree builder
-    TreeBuilder<2> builder;
-    SplitAdaptor<2> uniform(o_mra.getMaxScale(), true);
+    TreeBuilder<2, ComplexDouble> builder;
+    SplitAdaptor<2, ComplexDouble> uniform(o_mra.getMaxScale(), true);
 
     int N = finest_scale;
     double threshold = o_prec / 1000.0;
@@ -205,13 +205,13 @@ template <int D> void TimeEvolutionOperator<D>::initializeSemiUniformly(double t
     double o_prec = this->build_prec;
     auto o_mra = this->getOperatorMRA();
 
-    mrcpp::TreeBuilder<2> builder;
-    mrcpp::SplitAdaptor<2> uniform(o_mra.getMaxScale(), true);
+    mrcpp::TreeBuilder<2, ComplexDouble> builder;
+    mrcpp::SplitAdaptor<2, ComplexDouble> uniform(o_mra.getMaxScale(), true);
 
     int N = 18;
 
     auto o_tree = std::make_unique<CornerOperatorTree>(o_mra, o_prec);
-    DefaultCalculator<2> intitial_calculator;
+    DefaultCalculator<2, ComplexDouble> intitial_calculator;
     for (auto n = 0; n < 4; n++) builder.build(*o_tree, intitial_calculator, uniform, 1);
 
     double threshold = o_prec / 1000.0;

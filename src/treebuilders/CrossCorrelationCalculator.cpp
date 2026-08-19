@@ -33,7 +33,7 @@ using Eigen::VectorXd;
 
 namespace mrcpp {
 
-void CrossCorrelationCalculator::calcNode(MWNode<2> &node) {
+void CrossCorrelationCalculator::calcNode(MWNode<2, ComplexDouble> &node) {
     node.zeroCoefs();
     int type = node.getMWTree().getMRA().getScalingBasis().getScalingType();
     switch (type) {
@@ -56,7 +56,7 @@ void CrossCorrelationCalculator::calcNode(MWNode<2> &node) {
     node.calcNorms();
 }
 
-template <int T> void CrossCorrelationCalculator::applyCcc(MWNode<2> &node, CrossCorrelationCache<T> &ccc) {
+template <int T> void CrossCorrelationCalculator::applyCcc(MWNode<2, ComplexDouble> &node, CrossCorrelationCache<T> &ccc) {
     const MatrixXd &lMat = ccc.getLMatrix(node.getOrder());
     const MatrixXd &rMat = ccc.getRMatrix(node.getOrder());
 
@@ -85,7 +85,7 @@ template <int T> void CrossCorrelationCalculator::applyCcc(MWNode<2> &node, Cros
         const VectorXd &seg_b = vec_b.segment(0, node_b.getKp1_d());
         vec_o.segment(i * kp1_d, kp1_d) = (lMat * seg_a + rMat * seg_b);
     }
-    double *coefs = node.getCoefs();
+    ComplexDouble *coefs = node.getCoefs();
     double two_n = std::pow(2.0, -scale / 2.0);
     for (int i = 0; i < t_dim * kp1_d; i++) {
         auto scaling_factor = node.getMWTree().getMRA().getWorldBox().getScalingFactor(0);

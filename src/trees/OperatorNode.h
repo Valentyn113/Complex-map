@@ -30,7 +30,7 @@
 
 namespace mrcpp {
 
-class OperatorNode final : public MWNode<2> {
+class OperatorNode final : public MWNode<2, ComplexDouble> {
 public:
     OperatorTree &getOperTree() { return static_cast<OperatorTree &>(*this->tree); }
     OperatorNode &getOperParent() { return static_cast<OperatorNode &>(*this->parent); }
@@ -45,22 +45,23 @@ public:
     void deleteChildren() override;
 
     friend class OperatorTree;
-    friend class NodeAllocator<2>;
+    friend class NodeAllocator<2, ComplexDouble>;
+    friend class NodeAllocator<2, double>;
 
 protected:
     OperatorNode()
-            : MWNode<2>(){};
-    OperatorNode(MWTree<2> *tree, int rIdx)
-            : MWNode<2>(tree, rIdx){};
-    OperatorNode(MWNode<2> *parent, int cIdx)
-            : MWNode<2>(parent, cIdx){};
+            : MWNode<2, ComplexDouble>(){};
+    OperatorNode(MWTree<2, ComplexDouble> *tree, int rIdx)
+            : MWNode<2, ComplexDouble>(tree, rIdx){};
+    OperatorNode(MWNode<2, ComplexDouble> *parent, int cIdx)
+            : MWNode<2, ComplexDouble>(parent, cIdx){};
     OperatorNode(const OperatorNode &node) = delete;
     OperatorNode &operator=(const OperatorNode &node) = delete;
     ~OperatorNode() = default;
 
     void dealloc() override;
     double calcComponentNorm(int i) const override;
-    Eigen::MatrixXd getComponent(int i);
+    Eigen::MatrixXcd getComponent(int i);
 };
 
 } // namespace mrcpp

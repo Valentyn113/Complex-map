@@ -29,7 +29,7 @@
 
 namespace mrcpp {
 
-class ABGVCalculator final : public TreeCalculator<2> {
+class ABGVCalculator final : public TreeCalculator<2, ComplexDouble> {
 public:
     ABGVCalculator(const ScalingBasis &basis, double a, double b);
 
@@ -40,7 +40,7 @@ private:
     Eigen::VectorXd valueZero;
     Eigen::VectorXd valueOne;
 
-    void calcNode(MWNode<2> &node) override;
+    void calcNode(MWNode<2, ComplexDouble> &node) override;
 
     void calcKMatrix(const ScalingBasis &basis);
     void calcValueVectors(const ScalingBasis &basis);

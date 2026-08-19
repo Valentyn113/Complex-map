@@ -34,16 +34,16 @@
 
 namespace mrcpp {
 
-class BandWidthAdaptor final : public TreeAdaptor<2> {
+class BandWidthAdaptor final : public TreeAdaptor<2, ComplexDouble> {
 public:
     BandWidthAdaptor(int bw, int ms)
-            : TreeAdaptor<2>(ms)
+            : TreeAdaptor<2, ComplexDouble>(ms)
             , bandWidth(bw) {}
 
 private:
     const int bandWidth;
 
-    bool splitNode(const MWNode<2> &node) const override {
+    bool splitNode(const MWNode<2, ComplexDouble> &node) const override {
         const auto &idx = node.getNodeIndex();
         int dl = std::abs(idx[0] - idx[1]);
         // Within band width on NEXT scale

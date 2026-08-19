@@ -32,7 +32,7 @@
 
 namespace mrcpp {
 
-class BSCalculator final : public TreeCalculator<2> {
+class BSCalculator final : public TreeCalculator<2, ComplexDouble> {
 public:
     explicit BSCalculator(const ScalingBasis &basis, int n);
 
@@ -42,7 +42,7 @@ private:
     Eigen::MatrixXd S_0;
     Eigen::MatrixXd S_p1;
 
-    void calcNode(MWNode<2> &node);
+    void calcNode(MWNode<2, ComplexDouble> &node);
     void readSMatrix(const ScalingBasis &basis, char n);
 };
 

@@ -303,7 +303,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::applyOperator(int
     int o_depth = gNode.getScale() - this->oper->getOperatorRoot();
 
     double oNorm = 1.0;
-    double **oData = os.getOperData();
+    ComplexDouble **oData = os.getOperData();
 
     for (int d = 0; d < D; d++) {
         auto &oTree = this->oper->getComponent(i, d);
@@ -319,7 +319,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::applyOperator(int
         const OperatorNode &oNode = oTree.getNode(o_depth, oTransl);
         int oIdx = os.getOperIndex(d);
         oNorm *= oNode.getComponentNorm(oIdx);
-        oData[d] = const_cast<double *>(oNode.getCoefs()) + oIdx * os.kp1_2;
+        oData[d] = const_cast<ComplexDouble *>(oNode.getCoefs()) + oIdx * os.kp1_2;
     }
     double upperBound = oNorm * os.fThreshold;
     if (upperBound > os.gThreshold) {
@@ -332,7 +332,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::applyOperator(int
 operator component to a f-node in a n-dimensional tesor space. */
 template <int D, typename T> void ConvolutionCalculator<D, T>::tensorApplyOperComp(OperatorState<D, T> &os) {
     T **aux = os.getAuxData();
-    double **oData = os.getOperData();
+    ComplexDouble **oData = os.getOperData();
     /*
 #ifdef HAVE_BLAS
     double mult = 0.0;
@@ -363,7 +363,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::tensorApplyOperCo
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> f(aux[i], os.kp1, os.kp1_dm1);
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> g(aux[i + 1], os.kp1_dm1, os.kp1);
         if (oData[i] != nullptr) {
-            Eigen::Map<MatrixXd> op(oData[i], os.kp1, os.kp1);
+            const auto op = detail::OperBandMap<T>::get(oData[i], os.kp1);
             if (i == D - 1) { // Last dir: Add up into g
                 g.noalias() += f.transpose() * op;
             } else {

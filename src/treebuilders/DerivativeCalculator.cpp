@@ -184,14 +184,14 @@ template <int D, typename T> void DerivativeCalculator<D, T>::applyOperator_bw0(
     MWNode<D, T> &fNode = *os.fNode;
     int depth = gNode.getDepth();
 
-    double **oData = os.getOperData();
+    ComplexDouble **oData = os.getOperData();
 
     for (int d = 0; d < D; d++) {
         const OperatorTree &oTree = this->oper->getComponent(0, d);
         const OperatorNode &oNode = oTree.getNode(depth, 0);
         int oIdx = os.getOperIndex(d);
         if (this->applyDir == d) {
-            oData[d] = const_cast<double *>(oNode.getCoefs()) + oIdx * os.kp1_2;
+            oData[d] = const_cast<ComplexDouble *>(oNode.getCoefs()) + oIdx * os.kp1_2;
         } else {
             if (oIdx == 0 or oIdx == 3) {
                 // This will activate the identity operator in direction i
@@ -215,7 +215,7 @@ template <int D, typename T> void DerivativeCalculator<D, T>::applyOperator(Oper
     const NodeIndex<D> &gIdx = gNode.getNodeIndex();
     int depth = gNode.getDepth();
 
-    double **oData = os.getOperData();
+    ComplexDouble **oData = os.getOperData();
 
     for (int d = 0; d < D; d++) {
         const OperatorTree &oTree = this->oper->getComponent(0, d);
@@ -233,7 +233,7 @@ template <int D, typename T> void DerivativeCalculator<D, T>::applyOperator(Oper
         const OperatorNode &oNode = oTree.getNode(depth, oTransl);
         int oIdx = os.getOperIndex(d);
         if (this->applyDir == d) {
-            oData[d] = const_cast<double *>(oNode.getCoefs()) + oIdx * os.kp1_2;
+            oData[d] = const_cast<ComplexDouble *>(oNode.getCoefs()) + oIdx * os.kp1_2;
         } else {
             if (oTransl == 0 and (oIdx == 0 or oIdx == 3)) {
                 // This will activate the identity operator in direction i
@@ -252,12 +252,12 @@ template <int D, typename T> void DerivativeCalculator<D, T>::applyOperator(Oper
 operator component to a f-node in a n-dimensional tensor space. */
 template <int D, typename T> void DerivativeCalculator<D, T>::tensorApplyOperComp(OperatorState<D, T> &os) {
     T **aux = os.getAuxData();
-    double **oData = os.getOperData();
+    ComplexDouble **oData = os.getOperData();
     for (int i = 0; i < D; i++) {
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> f(aux[i], os.kp1, os.kp1_dm1);
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> g(aux[i + 1], os.kp1_dm1, os.kp1);
         if (oData[i] != nullptr) {
-            Eigen::Map<MatrixXd> op(oData[i], os.kp1, os.kp1);
+            const auto op = detail::OperBandMap<T>::get(oData[i], os.kp1);
             if (i == D - 1) { // Last dir: Add up into g
                 g.noalias() += f.transpose() * op;
             } else {

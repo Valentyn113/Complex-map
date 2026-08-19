@@ -42,7 +42,7 @@ namespace mrcpp {
  *
  *
  */
-class TimeEvolution_CrossCorrelationCalculator final : public TreeCalculator<2> {
+class TimeEvolution_CrossCorrelationCalculator final : public TreeCalculator<2, ComplexDouble> {
 public:
     TimeEvolution_CrossCorrelationCalculator(std::map<int, JpowerIntegrals *> &J, SchrodingerEvolution_CrossCorrelation *cross_correlation, bool imaginary)
             : J_power_inetgarls(J)
@@ -55,11 +55,11 @@ public:
     /// @brief If False then the calculator is using th real part of integrals, otherwise - the imaginary part.
     bool imaginary;
 
-    void calcNode(MWNode<2> &node) override;
+    void calcNode(MWNode<2, ComplexDouble> &node) override;
 
     // template <int T>
-    void applyCcc(MWNode<2> &node);
-    // template <int T> void applyCcc(MWNode<2> &node, CrossCorrelationCache<T> &ccc);
+    void applyCcc(MWNode<2, ComplexDouble> &node);
+    // template <int T> void applyCcc(MWNode<2, ComplexDouble> &node, CrossCorrelationCache<T> &ccc);
 };
 
 } // namespace mrcpp

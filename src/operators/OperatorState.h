@@ -40,6 +40,33 @@
 
 namespace mrcpp {
 
+namespace detail {
+
+/** @brief Map one operator band with the scalar type of the function tree it multiplies.
+ *
+ * Operator coefficients are stored as ComplexDouble unconditionally. A real
+ * function tree can only be convolved with a real kernel, so for T = double we
+ * map the real parts in place with an inner stride of 2; this is well defined
+ * because std::complex<double> is layout-compatible with double[2] ([complex.numbers.general]).
+ * Flop count on the real path is therefore unchanged; only the load pattern is strided.
+ */
+template <typename T> struct OperBandMap;
+
+template <> struct OperBandMap<ComplexDouble> {
+    using Type = Eigen::Map<const Eigen::MatrixXcd>;
+    static Type get(const ComplexDouble *o, int kp1) { return Type(o, kp1, kp1); }
+};
+
+template <> struct OperBandMap<double> {
+    using StrideType = Eigen::Stride<Eigen::Dynamic, 2>;
+    using Type = Eigen::Map<const Eigen::MatrixXd, Eigen::Unaligned, StrideType>;
+    static Type get(const ComplexDouble *o, int kp1) {
+        return Type(reinterpret_cast<const double *>(o), kp1, kp1, StrideType(2 * kp1, 2));
+    }
+};
+
+} // namespace detail
+
 #define GET_OP_IDX(FT, GT, ID) (2 * ((GT >> ID) & 1) + ((FT >> ID) & 1))
 
 template <int D, typename T> class OperatorState final {
@@ -87,7 +114,7 @@ public:
     int getOperIndex(int i) const { return GET_OP_IDX(this->ft, this->gt, i); }
 
     T **getAuxData() { return this->aux; }
-    double **getOperData() { return this->oData; }
+    ComplexDouble **getOperData() { return this->oData; }
 
     friend class ConvolutionCalculator<D, T>;
     friend class DerivativeCalculator<D, T>;
@@ -112,7 +139,7 @@ private:
     T *aux[D + 1];
     T *gData;
     T *fData;
-    double *oData[D];
+    ComplexDouble *oData[D];
 
     void calcMaxDeltaL() {
         const auto &gl = this->gNode->getNodeIndex();

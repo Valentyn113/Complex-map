@@ -47,7 +47,7 @@ template <int D> void BSOperator<D>::initialize() {
     int bw = 1; // Operator bandwidth
     auto oper_mra = this->getOperatorMRA();
 
-    TreeBuilder<2> builder;
+    TreeBuilder<2, ComplexDouble> builder;
     BSCalculator calculator(oper_mra.getScalingBasis(), this->order);
     BandWidthAdaptor adaptor(bw, oper_mra.getMaxScale());
 

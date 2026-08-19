@@ -56,7 +56,7 @@ NodeAllocator<D, T>::NodeAllocator(FunctionTree<D, T> *tree, SharedMemory<T> *me
 }
 
 template <>
-NodeAllocator<2>::NodeAllocator(OperatorTree *tree, SharedMemory<double> *mem, int coefsPerNode, int nodesPerChunk)
+NodeAllocator<2, ComplexDouble>::NodeAllocator(OperatorTree *tree, SharedMemory<ComplexDouble> *mem, int coefsPerNode, int nodesPerChunk)
         : coefsPerNode(coefsPerNode)
         , maxNodesPerChunk(nodesPerChunk)
         , tree_p(tree)

@@ -30,7 +30,7 @@
 
 namespace mrcpp {
 
-class OperatorTree : public MWTree<2> {
+class OperatorTree : public MWTree<2, ComplexDouble> {
 public:
     OperatorTree(const MultiResolutionAnalysis<2> &mra, double np, const std::string &name = "nn");
     OperatorTree(const OperatorTree &tree) = delete;
@@ -59,8 +59,8 @@ public:
     void mwTransformDown(bool overwrite) override;
     void mwTransformUp() override;
 
-    using MWTree<2>::getNode;
-    using MWTree<2>::findNode;
+    using MWTree<2, ComplexDouble>::getNode;
+    using MWTree<2, ComplexDouble>::findNode;
 
 protected:
     const double normPrec;

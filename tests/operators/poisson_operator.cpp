@@ -92,7 +92,7 @@ TEST_CASE("Initialize Poisson operator", "[init_poisson], [poisson_operator], [m
                 InterpolatingBasis basis(k);
                 MultiResolutionAnalysis<2> oper_mra(box, basis);
 
-                TreeBuilder<2> builder;
+                TreeBuilder<2, ComplexDouble> builder;
                 OperatorAdaptor adaptor(ccc_prec, oper_mra.getMaxScale());
 
                 for (size_t i = 0; i < kern_vec.size(); i++) {

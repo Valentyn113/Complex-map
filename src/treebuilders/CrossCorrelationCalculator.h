@@ -30,7 +30,7 @@
 
 namespace mrcpp {
 
-class CrossCorrelationCalculator final : public TreeCalculator<2> {
+class CrossCorrelationCalculator final : public TreeCalculator<2, ComplexDouble> {
 public:
     CrossCorrelationCalculator(FunctionTree<1> &k)
             : kernel(&k) {}
@@ -38,9 +38,9 @@ public:
 private:
     FunctionTree<1> *kernel;
 
-    void calcNode(MWNode<2> &node) override;
+    void calcNode(MWNode<2, ComplexDouble> &node) override;
 
-    template <int T> void applyCcc(MWNode<2> &node, CrossCorrelationCache<T> &ccc);
+    template <int T> void applyCcc(MWNode<2, ComplexDouble> &node, CrossCorrelationCache<T> &ccc);
 };
 
 } // namespace mrcpp
