@@ -25,8 +25,6 @@
 
 #pragma once
 
-#include <optional>
-
 #include "ConvolutionOperator.h"
 #include "MWOperator.h"
 #include "core/SchrodingerEvolution_CrossCorrelation.h"
@@ -53,8 +51,11 @@ template <int D>
 class TimeEvolutionOperator : public ConvolutionOperator<D> // One can use ConvolutionOperator instead as well
 {
 public:
-    /** finest_scale unset -> adaptive construction; set -> uniform down to that scale. */
-    TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, std::optional<int> finest_scale = std::nullopt, int max_Jpower = 30);
+    /** finest_scale < 0 -> adaptive construction, otherwise uniform down to that scale. */
+    TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, int finest_scale = -1, int max_Jpower = 30);
+    /** Old call sites passed `bool imaginary` in this position and would now bind
+     *  silently to finest_scale. Reject them at compile time. */
+    TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, bool imaginary, int max_Jpower = 30) = delete;
     TimeEvolutionOperator(const TimeEvolutionOperator &oper) = delete;
     TimeEvolutionOperator &operator=(const TimeEvolutionOperator &oper) = delete;
     virtual ~TimeEvolutionOperator() = default;

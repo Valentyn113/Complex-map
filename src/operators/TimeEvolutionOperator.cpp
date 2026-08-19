@@ -68,7 +68,7 @@ namespace mrcpp {
  *
  */
 template <int D>
-TimeEvolutionOperator<D>::TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, std::optional<int> finest_scale, int max_Jpower)
+TimeEvolutionOperator<D>::TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, int finest_scale, int max_Jpower)
         : ConvolutionOperator<D>(mra, mra.getRootScale(), -10) // One can use ConvolutionOperator instead as well
 {
     int oldlevel = Printer::setPrintLevel(0);
@@ -78,10 +78,10 @@ TimeEvolutionOperator<D>::TimeEvolutionOperator(const MultiResolutionAnalysis<D>
     this->cross_correlation = &cross_correlation;
 
     // will go outside of the constructor in future
-    if (finest_scale)
-        initialize(time, *finest_scale, max_Jpower);
-    else
+    if (finest_scale < 0)
         initialize(time, max_Jpower);
+    else
+        initialize(time, finest_scale, max_Jpower);
 
     this->initOperExp(1); // this turns out to be important
     Printer::setPrintLevel(oldlevel);
