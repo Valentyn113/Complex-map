@@ -43,7 +43,12 @@ OperatorTree::OperatorTree(const MultiResolutionAnalysis<2> &mra, double np, con
         , nodePtrAccess(nullptr) {
     if (this->normPrec < 0.0) MSG_ABORT("Negative prec");
 
-    int nodesPerChunk = 1024;
+    // Chunks are allocated in fixed node counts, so their footprint scales with
+    // sizeof(T). Operator coefficients are now ComplexDouble, so halve the node
+    // count to keep the chunk footprint what it was with real coefficients.
+    // Without this, the pre-existing reservation slack (a tree with a few dozen
+    // nodes still reserves a whole chunk) doubles along with the useful data.
+    int nodesPerChunk = 1024 * sizeof(double) / sizeof(ComplexDouble);
     int coefsPerNode = this->getTDim() * this->getKp1_d();
     this->nodeAllocator_p = std::make_unique<NodeAllocator<2, ComplexDouble>>(this, nullptr, coefsPerNode, nodesPerChunk);
     this->allocRootNodes();
