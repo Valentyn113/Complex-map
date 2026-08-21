@@ -62,6 +62,19 @@ public:
     OperatorTree &getComponent(int i, int d);
     const OperatorTree &getComponent(int i, int d) const;
 
+    /** @brief Imaginary part of a separable term.
+     *
+     * A complex kernel is carried as two real OperatorTrees on a matched grid
+     * rather than as one tree of complex coefficients, so real operators keep
+     * exactly the storage they had. Mirrors the isreal/iscomplex convention of
+     * CompFunctionData; only TimeEvolutionOperator populates the imaginary set.
+     */
+    int isreal() const { return this->raw_exp_im.empty(); }
+    int iscomplex() const { return not isreal(); }
+
+    OperatorTree &getComponentIm(int i, int d);
+    const OperatorTree &getComponentIm(int i, int d) const;
+
     std::array<OperatorTree *, D> &operator[](int i) { return this->oper_exp[i]; }
     const std::array<OperatorTree *, D> &operator[](int i) const { return this->oper_exp[i]; }
 
@@ -71,12 +84,15 @@ protected:
     MultiResolutionAnalysis<D> MRA;
     std::vector<std::array<OperatorTree *, D>> oper_exp;
     std::vector<std::unique_ptr<OperatorTree>> raw_exp;
+    std::vector<std::array<OperatorTree *, D>> oper_exp_im;
+    std::vector<std::unique_ptr<OperatorTree>> raw_exp_im;
     std::vector<int> band_max;
 
     MultiResolutionAnalysis<2> getOperatorMRA() const;
 
     void initOperExp(int M);
     void assign(int i, int d, OperatorTree *oper) { this->oper_exp[i][d] = oper; }
+    void assignIm(int i, int d, OperatorTree *oper) { this->oper_exp_im[i][d] = oper; }
 };
 
 } // namespace mrcpp

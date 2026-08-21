@@ -304,7 +304,9 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::applyOperator(int
 
     double oNorm = 1.0;
     double **oData = os.getOperData();
+    double **oData_im = os.getOperDataIm();
 
+    const bool oper_complex = this->oper->iscomplex();
     for (int d = 0; d < D; d++) {
         auto &oTree = this->oper->getComponent(i, d);
         int oTransl = fIdx[d] - gIdx[d];
@@ -320,6 +322,13 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::applyOperator(int
         int oIdx = os.getOperIndex(d);
         oNorm *= oNode.getComponentNorm(oIdx);
         oData[d] = const_cast<double *>(oNode.getCoefs()) + oIdx * os.kp1_2;
+        if (oper_complex) {
+            // Matched grid, so the same node index exists in the imaginary tree
+            const OperatorNode &oNodeIm = this->oper->getComponentIm(i, d).getNode(o_depth, oTransl);
+            oData_im[d] = const_cast<double *>(oNodeIm.getCoefs()) + oIdx * os.kp1_2;
+        } else {
+            oData_im[d] = nullptr;
+        }
     }
     double upperBound = oNorm * os.fThreshold;
     if (upperBound > os.gThreshold) {
@@ -333,6 +342,7 @@ operator component to a f-node in a n-dimensional tesor space. */
 template <int D, typename T> void ConvolutionCalculator<D, T>::tensorApplyOperComp(OperatorState<D, T> &os) {
     T **aux = os.getAuxData();
     double **oData = os.getOperData();
+    double **oData_im = os.getOperDataIm();
     /*
 #ifdef HAVE_BLAS
     double mult = 0.0;
@@ -368,6 +378,16 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::tensorApplyOperCo
                 g.noalias() += f.transpose() * op;
             } else {
                 g.noalias() = f.transpose() * op;
+            }
+            if constexpr (std::is_same<T, ComplexDouble>::value) {
+                // Complex kernel: the band for this direction is (op + i*op_im),
+                // and f already carries the complex result of the previous
+                // directions, so accumulating the two real products in sequence
+                // is the same contraction with the same real flop count.
+                if (oData_im[i] != nullptr) {
+                    Eigen::Map<MatrixXd> op_im(oData_im[i], os.kp1, os.kp1);
+                    g.noalias() += ComplexDouble(0.0, 1.0) * (f.transpose() * op_im);
+                }
             }
         } else {
             // Identity operator in direction i

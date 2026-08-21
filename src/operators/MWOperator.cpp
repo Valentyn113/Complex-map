@@ -44,6 +44,33 @@ template <int D> void MWOperator<D>::initOperExp(int M) {
     // Sets up an isotropic operator with the first M raw terms in all direction
     for (int i = 0; i < M; i++)
         for (int d = 0; d < D; d++) assign(i, d, this->raw_exp[i].get());
+
+    // Same for the imaginary part, when the kernel is complex
+    this->oper_exp_im.clear();
+    if (not this->raw_exp_im.empty()) {
+        if (this->raw_exp_im.size() < static_cast<size_t>(M)) MSG_ABORT("Incompatible imaginary raw expansion");
+        for (int m = 0; m < M; m++) {
+            std::array<OperatorTree *, D> otrees;
+            otrees.fill(nullptr);
+            this->oper_exp_im.push_back(otrees);
+        }
+        for (int i = 0; i < M; i++)
+            for (int d = 0; d < D; d++) assignIm(i, d, this->raw_exp_im[i].get());
+    }
+}
+
+template <int D> OperatorTree &MWOperator<D>::getComponentIm(int i, int d) {
+    if (i < 0 or static_cast<size_t>(i) >= this->oper_exp_im.size()) MSG_ERROR("Index out of bounds");
+    if (d < 0 or d >= D) MSG_ERROR("Index out of bounds");
+    if (this->oper_exp_im[i][d] == nullptr) MSG_ERROR("Invalid component");
+    return *this->oper_exp_im[i][d];
+}
+
+template <int D> const OperatorTree &MWOperator<D>::getComponentIm(int i, int d) const {
+    if (i < 0 or static_cast<size_t>(i) >= this->oper_exp_im.size()) MSG_ERROR("Index out of bounds");
+    if (d < 0 or d >= D) MSG_ERROR("Index out of bounds");
+    if (this->oper_exp_im[i][d] == nullptr) MSG_ERROR("Invalid component");
+    return *this->oper_exp_im[i][d];
 }
 
 template <int D> OperatorTree &MWOperator<D>::getComponent(int i, int d) {
@@ -72,6 +99,8 @@ template <int D> int MWOperator<D>::getMaxBandWidth(int depth) const {
 
 template <int D> void MWOperator<D>::clearBandWidths() {
     for (auto &i : this->oper_exp)
+        for (int d = 0; d < D; d++) i[d]->clearBandWidth();
+    for (auto &i : this->oper_exp_im)
         for (int d = 0; d < D; d++) i[d]->clearBandWidth();
 }
 

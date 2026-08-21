@@ -88,6 +88,7 @@ public:
 
     T **getAuxData() { return this->aux; }
     double **getOperData() { return this->oData; }
+    double **getOperDataIm() { return this->oData_im; }
 
     friend class ConvolutionCalculator<D, T>;
     friend class DerivativeCalculator<D, T>;
@@ -113,6 +114,7 @@ private:
     T *gData;
     T *fData;
     double *oData[D];
+    double *oData_im[D]{}; ///< imaginary band, null for a real kernel
 
     void calcMaxDeltaL() {
         const auto &gl = this->gNode->getNodeIndex();
