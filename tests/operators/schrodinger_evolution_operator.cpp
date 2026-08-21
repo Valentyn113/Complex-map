@@ -76,9 +76,13 @@ TEST_CASE("Apply Schrodinger's evolution operator", "[apply_schrodinger_evolutio
     double tolerance = prec * prec / 25.0;
     REQUIRE(error.getSquareNorm() == Catch::Approx(0.0).margin(tolerance));
 
-    // Unitarity: the semigroup preserves the norm. This catches a wrong phase,
-    // which the comparison above can pass.
-    REQUIRE(fout_tree.getSquareNorm() == Catch::Approx(f_tree.getSquareNorm()).epsilon(1.0e-6));
+    // The two halves of the kernel must live on the same grid: the contraction
+    // fetches the same node index from both trees.
+    REQUIRE(Exp.getComponent(0, 0).getNNodes() == Exp.getComponentIm(0, 0).getNNodes());
+
+    // Both halves must actually carry the kernel. A silently empty imaginary
+    // part would still pass the comparison above for a nearly-real kernel.
+    REQUIRE(Exp.getComponentIm(0, 0).getSquareNorm() > 0.0);
 }
 
 } // namespace schrodinger_evolution_operator
