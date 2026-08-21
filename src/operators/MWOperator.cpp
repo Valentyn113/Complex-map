@@ -106,31 +106,43 @@ template <int D> void MWOperator<D>::clearBandWidths() {
 
 template <int D> void MWOperator<D>::calcBandWidths(double prec) {
     int maxDepth = 0;
-    // First compute BandWidths and find depth of the deepest component
-    for (auto &i : this->oper_exp) {
-        for (int d = 0; d < D; d++) {
-            OperatorTree &oTree = *i[d];
-            oTree.calcBandWidth(prec);
-            const BandWidth &bw = oTree.getBandWidth();
-            int depth = bw.getDepth();
-            if (depth > maxDepth) maxDepth = depth;
+    // First compute BandWidths and find depth of the deepest component. Both
+    // halves of a complex kernel must be covered: the reach of the operator is
+    // the reach of either part, and screening on the real part alone would drop
+    // contributions wherever the imaginary part extends further.
+    auto calc_depth = [&](std::vector<std::array<OperatorTree *, D>> &exp) {
+        for (auto &i : exp) {
+            for (int d = 0; d < D; d++) {
+                OperatorTree &oTree = *i[d];
+                oTree.calcBandWidth(prec);
+                const BandWidth &bw = oTree.getBandWidth();
+                int depth = bw.getDepth();
+                if (depth > maxDepth) maxDepth = depth;
+            }
         }
-    }
+    };
+    calc_depth(this->oper_exp);
+    calc_depth(this->oper_exp_im);
+
     this->band_max = std::vector<int>(maxDepth + 1, -1);
 
     // Find the largest effective bandwidth at each scale
-    for (auto &i : this->oper_exp) {
-        for (int d = 0; d < D; d++) {
-            const OperatorTree &oTree = *i[d];
-            const BandWidth &bw = oTree.getBandWidth();
-            for (int n = 0; n <= bw.getDepth(); n++) { // scale loop
-                for (int j = 0; j < 4; j++) {          // component loop
-                    int w = bw.getWidth(n, j);
-                    if (w > this->band_max[n]) this->band_max[n] = w;
+    auto fold_widths = [&](const std::vector<std::array<OperatorTree *, D>> &exp) {
+        for (const auto &i : exp) {
+            for (int d = 0; d < D; d++) {
+                const OperatorTree &oTree = *i[d];
+                const BandWidth &bw = oTree.getBandWidth();
+                for (int n = 0; n <= bw.getDepth(); n++) { // scale loop
+                    for (int j = 0; j < 4; j++) {          // component loop
+                        int w = bw.getWidth(n, j);
+                        if (w > this->band_max[n]) this->band_max[n] = w;
+                    }
                 }
             }
         }
-    }
+    };
+    fold_widths(this->oper_exp);
+    fold_widths(this->oper_exp_im);
     println(20, "  Maximum bandwidths:");
     for (auto bw : this->band_max) println(20, bw);
     println(20, std::endl);

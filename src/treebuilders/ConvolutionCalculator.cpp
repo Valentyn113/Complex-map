@@ -316,19 +316,28 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::applyOperator(int
         int a = (os.gt & (1 << d)) >> d;
         int b = (os.ft & (1 << d)) >> d;
         int idx = (a << 1) + b;
-        if (oTree.isOutsideBand(oTransl, o_depth, idx)) { return; }
+        // Screening must reflect the whole kernel: a term is outside the band
+        // only when both halves are, and the norm used for thresholding is the
+        // modulus of the pair, not the real part alone.
+        OperatorTree *oTreeIm = oper_complex ? &this->oper->getComponentIm(i, d) : nullptr;
+        bool outside = oTree.isOutsideBand(oTransl, o_depth, idx);
+        if (oTreeIm != nullptr) outside = outside and oTreeIm->isOutsideBand(oTransl, o_depth, idx);
+        if (outside) { return; }
 
         const OperatorNode &oNode = oTree.getNode(o_depth, oTransl);
         int oIdx = os.getOperIndex(d);
-        oNorm *= oNode.getComponentNorm(oIdx);
+        double nrm = oNode.getComponentNorm(oIdx);
         oData[d] = const_cast<double *>(oNode.getCoefs()) + oIdx * os.kp1_2;
-        if (oper_complex) {
+        if (oTreeIm != nullptr) {
             // Matched grid, so the same node index exists in the imaginary tree
-            const OperatorNode &oNodeIm = this->oper->getComponentIm(i, d).getNode(o_depth, oTransl);
+            const OperatorNode &oNodeIm = oTreeIm->getNode(o_depth, oTransl);
+            double nrm_im = oNodeIm.getComponentNorm(oIdx);
+            nrm = std::sqrt(nrm * nrm + nrm_im * nrm_im);
             oData_im[d] = const_cast<double *>(oNodeIm.getCoefs()) + oIdx * os.kp1_2;
         } else {
             oData_im[d] = nullptr;
         }
+        oNorm *= nrm;
     }
     double upperBound = oNorm * os.fThreshold;
     if (upperBound > os.gThreshold) {
