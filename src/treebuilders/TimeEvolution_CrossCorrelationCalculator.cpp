@@ -101,9 +101,6 @@ void TimeEvolution_CrossCorrelationCalculator::applyCcc(MWNode<2> &node) {
                         case Kernel_Imag:
                             J = z.imag();
                             break;
-                        case Kernel_Modulus:
-                            J = std::abs(z);
-                            break;
                     }
                     vec_o.segment(i * kp1_d, kp1_d)(vec_o_segment_index) += J * cross_correlation->Matrix[k](p, j); // by default eigen library reads a transpose matrix from a file
                 }

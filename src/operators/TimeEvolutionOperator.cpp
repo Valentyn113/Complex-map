@@ -58,14 +58,33 @@ namespace mrcpp {
 
 namespace {
 
+/** @brief True where an already-built reference tree has children. */
+inline bool refines_in(const OperatorTree &reference, const MWNode<2> &node) {
+    const MWNode<2> *ref_node = const_cast<OperatorTree &>(reference).findNode(node.getNodeIndex());
+    return (ref_node != nullptr) and ref_node->isBranchNode();
+}
+
+/** @brief The splitting rule of `OperatorAdaptor`.
+ *
+ * @details Duplicated because `OperatorAdaptor` is `final` and cannot be
+ * derived from.
+ */
+inline bool operator_split_check(const MWNode<2> &node) {
+    const auto &idx = node.getNodeIndex();
+    bool chkTransl = (idx[0] == 0 or idx[1] == 0);
+    bool chkCompNorm = false;
+    for (int i = 1; i < 4; i++) {
+        if (node.getComponentNorm(i) > 0.0) chkCompNorm = true;
+    }
+    return chkTransl and chkCompNorm;
+}
+
 /** @class GridCopyAdaptor
  *
  * @brief Refines a tree onto the grid of an already-built reference tree.
  *
  * @details `CopyAdaptor` does the same job for `FunctionTree`, but takes a
- * `FunctionTreeVector` and so cannot be pointed at an `OperatorTree`. This is
- * the operator-side equivalent, used to fill the real and imaginary halves of
- * a complex kernel on one common grid.
+ * `FunctionTreeVector` and so cannot be pointed at an `OperatorTree`.
  */
 class GridCopyAdaptor final : public TreeAdaptor<2> {
 public:
@@ -76,10 +95,26 @@ public:
 protected:
     const OperatorTree &reference;
 
-    bool splitNode(const MWNode<2> &node) const override {
-        const MWNode<2> *ref_node = this->reference.findNode(node.getNodeIndex());
-        return (ref_node != nullptr) and ref_node->isBranchNode();
-    }
+    bool splitNode(const MWNode<2> &node) const override { return refines_in(this->reference, node); }
+};
+
+/** @class GridUnionAdaptor
+ *
+ * @brief Splits where the operator criterion fires or the reference tree does.
+ *
+ * @details Used for the second of three build passes, so that the resulting
+ * grid is the union of what the two halves of the kernel need.
+ */
+class GridUnionAdaptor final : public TreeAdaptor<2> {
+public:
+    GridUnionAdaptor(const OperatorTree &ref, int ms)
+            : TreeAdaptor<2>(ms)
+            , reference(ref) {}
+
+protected:
+    const OperatorTree &reference;
+
+    bool splitNode(const MWNode<2> &node) const override { return operator_split_check(node) or refines_in(this->reference, node); }
 };
 
 } // namespace
@@ -152,19 +187,16 @@ template <int D> void TimeEvolutionOperator<D>::initialize(double time, int max_
     mrcpp::TreeBuilder<2> builder;
     OperatorAdaptor adaptor(o_prec, o_mra.getMaxScale(), true);
 
-    // Settle the grid once on the modulus of the kernel, then fill both real
-    // parts on it. Refining each part on its own norms would give them
-    // different grids, and the contraction indexes both with the same node.
-    auto grid_tree = std::make_unique<CornerOperatorTree>(o_mra, o_prec);
-    TimeEvolution_CrossCorrelationCalculator grid_calc(J, this->cross_correlation, Kernel_Modulus);
-    builder.build(*grid_tree, grid_calc, adaptor, N);
-
-    GridCopyAdaptor grid_adaptor(*grid_tree, o_mra.getMaxScale());
-
-    auto build_part = [&](Kernel_Part part) {
+    // The two halves must share a grid, since the contraction indexes both
+    // trees with the same node, and each half needs whatever its own wavelet
+    // norms demand. Take the union in three passes:
+    //  - refine the real part on its own criterion
+    //  - refine the imaginary part on its criterion OR the real grid
+    //  - rebuild the real part on that union
+    auto build_part = [&](Kernel_Part part, TreeAdaptor<2> &adapt) {
         auto o_tree = std::make_unique<CornerOperatorTree>(o_mra, o_prec);
         TimeEvolution_CrossCorrelationCalculator calculator(J, this->cross_correlation, part);
-        builder.build(*o_tree, calculator, grid_adaptor, N);
+        builder.build(*o_tree, calculator, adapt, N);
 
         Timer trans_t;
         o_tree->mwTransform(BottomUp);
@@ -176,8 +208,16 @@ template <int D> void TimeEvolutionOperator<D>::initialize(double time, int max_
         return o_tree;
     };
 
-    this->raw_exp.push_back(build_part(Kernel_Real));
-    this->raw_exp_im.push_back(build_part(Kernel_Imag));
+    auto re_first = build_part(Kernel_Real, adaptor);
+
+    GridUnionAdaptor union_adaptor(*re_first, o_mra.getMaxScale());
+    auto im_tree = build_part(Kernel_Imag, union_adaptor);
+
+    GridCopyAdaptor copy_adaptor(*im_tree, o_mra.getMaxScale());
+    auto re_tree = build_part(Kernel_Real, copy_adaptor);
+
+    this->raw_exp.push_back(std::move(re_tree));
+    this->raw_exp_im.push_back(std::move(im_tree));
 
     for (int n = 0; n <= N + 1; n++) delete J[n];
 }

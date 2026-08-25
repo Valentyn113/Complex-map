@@ -44,14 +44,12 @@ namespace mrcpp {
  */
 /** @brief Which part of the complex kernel a calculator pass writes.
  *
- * @details `Kernel_Modulus` writes \f$ |z| \f$ and exists only to drive
- * adaptive refinement: the grid is settled once on the modulus, then the two
- * real parts are filled on it. This is the operator-side counterpart of
- * `FunctionTree::Real()` and `FunctionTree::Imag()`, which likewise derive
- * real trees from the grid of the complex object rather than refining each
- * part on its own.
+ * @details The two parts are expansion coefficients of the same kernel, so
+ * they must end up on one grid: the contraction indexes both trees with the
+ * same node. See `TimeEvolutionOperator::initialize` for how that grid is
+ * established.
  */
-enum Kernel_Part { Kernel_Real, Kernel_Imag, Kernel_Modulus };
+enum Kernel_Part { Kernel_Real, Kernel_Imag };
 
 class TimeEvolution_CrossCorrelationCalculator final : public TreeCalculator<2> {
 public:
