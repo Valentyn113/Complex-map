@@ -56,6 +56,35 @@
 
 namespace mrcpp {
 
+namespace {
+
+/** @class GridCopyAdaptor
+ *
+ * @brief Refines a tree onto the grid of an already-built reference tree.
+ *
+ * @details `CopyAdaptor` does the same job for `FunctionTree`, but takes a
+ * `FunctionTreeVector` and so cannot be pointed at an `OperatorTree`. This is
+ * the operator-side equivalent, used to fill the real and imaginary halves of
+ * a complex kernel on one common grid.
+ */
+class GridCopyAdaptor final : public TreeAdaptor<2> {
+public:
+    GridCopyAdaptor(const OperatorTree &ref, int ms)
+            : TreeAdaptor<2>(ms)
+            , reference(ref) {}
+
+protected:
+    const OperatorTree &reference;
+
+    bool splitNode(const MWNode<2> &node) const override {
+        const MWNode<2> *ref_node = this->reference.findNode(node.getNodeIndex());
+        return (ref_node != nullptr) and ref_node->isBranchNode();
+    }
+};
+
+} // namespace
+
+
 /** @brief A uniform constructor for TimeEvolutionOperator class.
  *
  * @param[in] mra: MRA.
@@ -123,14 +152,19 @@ template <int D> void TimeEvolutionOperator<D>::initialize(double time, int max_
     mrcpp::TreeBuilder<2> builder;
     OperatorAdaptor adaptor(o_prec, o_mra.getMaxScale(), true);
 
-    // The two halves of the kernel must share a grid: the contraction fetches
-    // the same node index from both trees. The adaptor splits on the modulus of
-    // the power integral, so both passes refine identically and no separate
-    // grid-matching step is needed.
-    auto build_part = [&](bool imaginary) {
+    // Settle the grid once on the modulus of the kernel, then fill both real
+    // parts on it. Refining each part on its own norms would give them
+    // different grids, and the contraction indexes both with the same node.
+    auto grid_tree = std::make_unique<CornerOperatorTree>(o_mra, o_prec);
+    TimeEvolution_CrossCorrelationCalculator grid_calc(J, this->cross_correlation, Kernel_Modulus);
+    builder.build(*grid_tree, grid_calc, adaptor, N);
+
+    GridCopyAdaptor grid_adaptor(*grid_tree, o_mra.getMaxScale());
+
+    auto build_part = [&](Kernel_Part part) {
         auto o_tree = std::make_unique<CornerOperatorTree>(o_mra, o_prec);
-        TimeEvolution_CrossCorrelationCalculator calculator(J, this->cross_correlation, imaginary);
-        builder.build(*o_tree, calculator, adaptor, N);
+        TimeEvolution_CrossCorrelationCalculator calculator(J, this->cross_correlation, part);
+        builder.build(*o_tree, calculator, grid_adaptor, N);
 
         Timer trans_t;
         o_tree->mwTransform(BottomUp);
@@ -142,8 +176,8 @@ template <int D> void TimeEvolutionOperator<D>::initialize(double time, int max_
         return o_tree;
     };
 
-    this->raw_exp.push_back(build_part(false));
-    this->raw_exp_im.push_back(build_part(true));
+    this->raw_exp.push_back(build_part(Kernel_Real));
+    this->raw_exp_im.push_back(build_part(Kernel_Imag));
 
     for (int n = 0; n <= N + 1; n++) delete J[n];
 }
@@ -168,8 +202,8 @@ template <int D> void TimeEvolutionOperator<D>::initialize(double time, int fine
 
     // Uniform refinement, so the real and imaginary trees share a grid by
     // construction and the contraction can index both with the same node.
-    auto build_part = [&](bool imaginary) {
-        TimeEvolution_CrossCorrelationCalculator calculator(J, this->cross_correlation, imaginary);
+    auto build_part = [&](Kernel_Part part) {
+        TimeEvolution_CrossCorrelationCalculator calculator(J, this->cross_correlation, part);
         auto o_tree = std::make_unique<CornerOperatorTree>(o_mra, o_prec);
         builder.build(*o_tree, calculator, uniform, N); // Expand 1D kernel into 2D operator
 
@@ -182,8 +216,8 @@ template <int D> void TimeEvolutionOperator<D>::initialize(double time, int fine
         return o_tree;
     };
 
-    this->raw_exp.push_back(build_part(false));
-    this->raw_exp_im.push_back(build_part(true));
+    this->raw_exp.push_back(build_part(Kernel_Real));
+    this->raw_exp_im.push_back(build_part(Kernel_Imag));
 
     for (int n = 0; n <= N + 1; n++) delete J[n];
 }
@@ -214,7 +248,7 @@ template <int D> void TimeEvolutionOperator<D>::initializeSemiUniformly(double t
     double threshold = o_prec / 1000.0;
     std::map<int, mrcpp::JpowerIntegrals *> J;
     for (int n = 0; n <= N + 1; n++) J[n] = new mrcpp::JpowerIntegrals(time * std::pow(4, n), n, max_Jpower, threshold);
-    mrcpp::TimeEvolution_CrossCorrelationCalculator calculator(J, this->cross_correlation, false);
+    mrcpp::TimeEvolution_CrossCorrelationCalculator calculator(J, this->cross_correlation, Kernel_Real);
 
     OperatorAdaptor adaptor(o_prec, o_mra.getMaxScale());
     builder.build(*o_tree, calculator, adaptor, 13);

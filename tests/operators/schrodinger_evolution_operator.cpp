@@ -83,6 +83,12 @@ TEST_CASE("Apply Schrodinger's evolution operator", "[apply_schrodinger_evolutio
     // Both halves must actually carry the kernel. A silently empty imaginary
     // part would still pass the comparison above for a nearly-real kernel.
     REQUIRE(Exp.getComponentIm(0, 0).getSquareNorm() > 0.0);
+
+    // Same, on the adaptive path. Refining each part on its own norms gives
+    // them different grids -- the uniform path above cannot detect that.
+    mrcpp::TimeEvolutionOperator<1> ExpAdapt(MRA, prec, delta_t);
+    REQUIRE(ExpAdapt.getComponent(0, 0).getNNodes() == ExpAdapt.getComponentIm(0, 0).getNNodes());
+    REQUIRE(ExpAdapt.getComponentIm(0, 0).getSquareNorm() > 0.0);
 }
 
 } // namespace schrodinger_evolution_operator

@@ -92,11 +92,19 @@ void TimeEvolution_CrossCorrelationCalculator::applyCcc(MWNode<2> &node) {
                 // std::min(M, N)  could be used for breaking the following loop
                 // this->cross_correlation->Matrix.size() should be big enough a priori
                 for (size_t k = 0; 2 * k + p + j < J_power_inetgarls[l_b].size(); k++) {
-                    double J;
-                    if (this->imaginary)
-                        J = J_power_inetgarls[l_b][2 * k + p + j].imag();
-                    else
-                        J = J_power_inetgarls[l_b][2 * k + p + j].real();
+                    const ComplexDouble z = J_power_inetgarls[l_b][2 * k + p + j];
+                    double J = 0.0;
+                    switch (this->part) {
+                        case Kernel_Real:
+                            J = z.real();
+                            break;
+                        case Kernel_Imag:
+                            J = z.imag();
+                            break;
+                        case Kernel_Modulus:
+                            J = std::abs(z);
+                            break;
+                    }
                     vec_o.segment(i * kp1_d, kp1_d)(vec_o_segment_index) += J * cross_correlation->Matrix[k](p, j); // by default eigen library reads a transpose matrix from a file
                 }
                 vec_o_segment_index++;

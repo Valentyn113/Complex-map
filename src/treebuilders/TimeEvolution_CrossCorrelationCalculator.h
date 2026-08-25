@@ -42,18 +42,29 @@ namespace mrcpp {
  *
  *
  */
+/** @brief Which part of the complex kernel a calculator pass writes.
+ *
+ * @details `Kernel_Modulus` writes \f$ |z| \f$ and exists only to drive
+ * adaptive refinement: the grid is settled once on the modulus, then the two
+ * real parts are filled on it. This is the operator-side counterpart of
+ * `FunctionTree::Real()` and `FunctionTree::Imag()`, which likewise derive
+ * real trees from the grid of the complex object rather than refining each
+ * part on its own.
+ */
+enum Kernel_Part { Kernel_Real, Kernel_Imag, Kernel_Modulus };
+
 class TimeEvolution_CrossCorrelationCalculator final : public TreeCalculator<2> {
 public:
-    TimeEvolution_CrossCorrelationCalculator(std::map<int, JpowerIntegrals *> &J, SchrodingerEvolution_CrossCorrelation *cross_correlation, bool imaginary)
+    TimeEvolution_CrossCorrelationCalculator(std::map<int, JpowerIntegrals *> &J, SchrodingerEvolution_CrossCorrelation *cross_correlation, Kernel_Part part)
             : J_power_inetgarls(J)
             , cross_correlation(cross_correlation)
-            , imaginary(imaginary) {}
+            , part(part) {}
     // private:
     std::map<int, JpowerIntegrals *> J_power_inetgarls;
     SchrodingerEvolution_CrossCorrelation *cross_correlation;
 
-    /// @brief If False then the calculator is using th real part of integrals, otherwise - the imaginary part.
-    bool imaginary;
+    /// @brief Part of the complex kernel written by this pass.
+    Kernel_Part part;
 
     void calcNode(MWNode<2> &node) override;
 

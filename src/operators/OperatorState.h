@@ -88,6 +88,8 @@ public:
 
     T **getAuxData() { return this->aux; }
     double **getOperData() { return this->oData; }
+
+    /** @brief Imaginary band of the current term, `nullptr` for a real kernel. */
     double **getOperDataIm() { return this->oData_im; }
 
     friend class ConvolutionCalculator<D, T>;

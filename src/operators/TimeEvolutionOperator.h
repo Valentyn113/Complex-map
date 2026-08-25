@@ -51,10 +51,30 @@ template <int D>
 class TimeEvolutionOperator : public ConvolutionOperator<D> // One can use ConvolutionOperator instead as well
 {
 public:
-    /** finest_scale < 0 -> adaptive construction, otherwise uniform down to that scale. */
+    /** @brief Schrodinger semigroup \f$ \exp(i t \partial_{xx}) \f$ at one time moment.
+     *
+     * @param[in] mra: which MRA to operate on
+     * @param[in] prec: build precision
+     * @param[in] time: time step \f$ t \f$
+     * @param[in] finest_scale: uniform refinement down to this scale
+     * @param[in] max_Jpower: number of power integrals retained
+     *
+     * @details The kernel is complex and is carried as two real operator trees
+     * on a common grid:
+     * - `finest_scale < 0` means adaptive construction
+     * - otherwise the operator is refined uniformly down to `finest_scale`
+     * - the grid is settled on the modulus, then both parts are filled on it
+     *
+     * @note Applying this to a real `FunctionTree` aborts; project the input as
+     * `ComplexDouble` first, or let the `CompFunction` overload promote it.
+     */
     TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, int finest_scale = -1, int max_Jpower = 30);
-    /** Old call sites passed `bool imaginary` in this position and would now bind
-     *  silently to finest_scale. Reject them at compile time. */
+
+    /** @brief Rejects the old `bool imaginary` argument at compile time.
+     *
+     * @details The semigroup is no longer built one part at a time. A `bool` in
+     * that position would otherwise bind silently to `finest_scale`.
+     */
     TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, bool imaginary, int max_Jpower = 30) = delete;
     TimeEvolutionOperator(const TimeEvolutionOperator &oper) = delete;
     TimeEvolutionOperator &operator=(const TimeEvolutionOperator &oper) = delete;

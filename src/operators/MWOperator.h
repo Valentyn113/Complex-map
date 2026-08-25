@@ -62,16 +62,30 @@ public:
     OperatorTree &getComponent(int i, int d);
     const OperatorTree &getComponent(int i, int d) const;
 
-    /** @brief Imaginary part of a separable term.
+    /** @brief Whether the kernel is real.
      *
-     * A complex kernel is carried as two real OperatorTrees on a matched grid
-     * rather than as one tree of complex coefficients, so real operators keep
-     * exactly the storage they had. Mirrors the isreal/iscomplex convention of
-     * CompFunctionData; only TimeEvolutionOperator populates the imaginary set.
+     * @details A complex kernel is carried as two real `OperatorTree`s on a
+     * common grid rather than as one tree of complex coefficients, so real
+     * operators keep exactly the storage they have without the flag:
+     * - `isreal()` means the imaginary expansion is empty
+     * - only `TimeEvolutionOperator` populates the imaginary expansion
+     * - the two expansions are index-aligned and share a grid per term
+     *
+     * @note Follows the `isreal`/`iscomplex` convention of `CompFunctionData`.
      */
     int isreal() const { return this->raw_exp_im.empty(); }
+
+    /** @brief Whether the kernel has a non-zero imaginary part. */
     int iscomplex() const { return not isreal(); }
 
+    /** @brief Imaginary part of separable term `i` in direction `d`.
+     *
+     * @details The operator-side counterpart of `FunctionTree::Imag()`: a real
+     * tree holding the imaginary part of a complex object, living on the grid
+     * that object was refined on.
+     *
+     * @note Aborts for a real operator; guard with `iscomplex()`.
+     */
     OperatorTree &getComponentIm(int i, int d);
     const OperatorTree &getComponentIm(int i, int d) const;
 
