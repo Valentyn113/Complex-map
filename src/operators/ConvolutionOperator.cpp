@@ -93,7 +93,7 @@ template <int D> void ConvolutionOperator<D>::initialize(GaussExp<1> &kernel, do
         delete k_func;
 
         CrossCorrelationCalculator calculator(k_tree);
-        auto o_tree = std::make_unique<OperatorTree>(o_mra, o_prec);
+        auto o_tree = std::make_unique<OperatorTree<double>>(o_mra, o_prec);
         builder.build(*o_tree, calculator, adaptor, -1); // Expand 1D kernel into 2D operator
 
         Timer trans_t;

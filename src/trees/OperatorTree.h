@@ -30,12 +30,22 @@
 
 namespace mrcpp {
 
-class OperatorTree : public MWTree<2> {
+/** @class OperatorTree
+ *
+ * @brief Non-standard form of a separable operator.
+ *
+ * @details Templated on the coefficient type the same way `FunctionTree` is:
+ * real for Poisson, Helmholtz, the derivative operators and identity, complex
+ * for the Schrodinger semigroup. A caller holds whichever matches the kernel,
+ * so a real operator keeps real storage and only time evolution pays for being
+ * complex.
+ */
+template <typename T = double> class OperatorTree : public MWTree<2, T> {
 public:
     OperatorTree(const MultiResolutionAnalysis<2> &mra, double np, const std::string &name = "nn");
-    OperatorTree(const OperatorTree &tree) = delete;
-    OperatorTree &operator=(const OperatorTree &tree) = delete;
-    virtual ~OperatorTree() override;
+    OperatorTree(const OperatorTree<T> &tree) = delete;
+    OperatorTree<T> &operator=(const OperatorTree<T> &tree) = delete;
+    ~OperatorTree() override;
 
     double getNormPrecision() const { return this->normPrec; }
 
@@ -50,23 +60,23 @@ public:
     BandWidth &getBandWidth() { return *this->bandWidth; }
     const BandWidth &getBandWidth() const { return *this->bandWidth; }
 
-    OperatorNode &getNode(int n, int l) {
+    OperatorNode<T> &getNode(int n, int l) {
         return *nodePtrAccess[n][l];
     } ///< TODO: It has to be specified more.
       ///< \b l is distance to the diagonal.
-    const OperatorNode &getNode(int n, int l) const { return *nodePtrAccess[n][l]; }
+    const OperatorNode<T> &getNode(int n, int l) const { return *nodePtrAccess[n][l]; }
 
     void mwTransformDown(bool overwrite) override;
     void mwTransformUp() override;
 
-    using MWTree<2>::getNode;
-    using MWTree<2>::findNode;
+    using MWTree<2, T>::getNode;
+    using MWTree<2, T>::findNode;
 
 protected:
     const double normPrec;
     BandWidth *bandWidth;
-    OperatorNode ***nodePtrStore;  ///< Avoids tree lookups
-    OperatorNode ***nodePtrAccess; ///< Center (l=0) of node list
+    OperatorNode<T> ***nodePtrStore;  ///< Avoids tree lookups
+    OperatorNode<T> ***nodePtrAccess; ///< Center (l=0) of node list
 
     void allocRootNodes();
     void getMaxTranslations(Eigen::VectorXi &maxTransl);

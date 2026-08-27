@@ -42,7 +42,7 @@ class BankAccount;
 
 /** @class MWTree
  *
- * @brief Base class for Multiwavelet tree structures, such as FunctionTree and OperatorTree
+ * @brief Base class for Multiwavelet tree structures, such as FunctionTree and OperatorTree<double>
  *
  * @details The MWTree class is the base class for all tree structures
  * needed for Multiwavelet calculations. The MWTree is a D-dimensional
@@ -150,7 +150,7 @@ public:
 
     friend class MWNode<D, T>;
     friend class FunctionNode<D, T>;
-    friend class OperatorNode;
+    friend class OperatorNode<T>;
     friend class TreeBuilder<D, T>;
     friend class NodeAllocator<D, T>;
 

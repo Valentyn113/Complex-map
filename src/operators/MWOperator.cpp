@@ -36,7 +36,7 @@ template <int D> void MWOperator<D>::initOperExp(int M) {
     if (this->raw_exp.size() < static_cast<size_t>(M)) MSG_ABORT("Incompatible raw expansion");
     this->oper_exp.clear();
     for (int m = 0; m < M; m++) {
-        std::array<OperatorTree *, D> otrees;
+        std::array<OperatorTree<double> *, D> otrees;
         otrees.fill(nullptr);
         this->oper_exp.push_back(otrees);
     }
@@ -46,14 +46,14 @@ template <int D> void MWOperator<D>::initOperExp(int M) {
         for (int d = 0; d < D; d++) assign(i, d, this->raw_exp[i].get());
 }
 
-template <int D> OperatorTree &MWOperator<D>::getComponent(int i, int d) {
+template <int D> OperatorTree<double> &MWOperator<D>::getComponent(int i, int d) {
     if (i < 0 or static_cast<size_t>(i) >= this->oper_exp.size()) MSG_ERROR("Index out of bounds");
     if (d < 0 or d >= D) MSG_ERROR("Dimension out of bounds");
     if (this->oper_exp[i][d] == nullptr) MSG_ERROR("Invalid component");
     return *this->oper_exp[i][d];
 }
 
-template <int D> const OperatorTree &MWOperator<D>::getComponent(int i, int d) const {
+template <int D> const OperatorTree<double> &MWOperator<D>::getComponent(int i, int d) const {
     if (i < 0 or static_cast<size_t>(i) >= this->oper_exp.size()) MSG_ERROR("Index out of bounds");
     if (d < 0 or d >= D) MSG_ERROR("Dimension out of bounds");
     if (this->oper_exp[i][d] == nullptr) MSG_ERROR("Invalid component");
@@ -80,7 +80,7 @@ template <int D> void MWOperator<D>::calcBandWidths(double prec) {
     // First compute BandWidths and find depth of the deepest component
     for (auto &i : this->oper_exp) {
         for (int d = 0; d < D; d++) {
-            OperatorTree &oTree = *i[d];
+            OperatorTree<double> &oTree = *i[d];
             oTree.calcBandWidth(prec);
             const BandWidth &bw = oTree.getBandWidth();
             int depth = bw.getDepth();
@@ -92,7 +92,7 @@ template <int D> void MWOperator<D>::calcBandWidths(double prec) {
     // Find the largest effective bandwidth at each scale
     for (auto &i : this->oper_exp) {
         for (int d = 0; d < D; d++) {
-            const OperatorTree &oTree = *i[d];
+            const OperatorTree<double> &oTree = *i[d];
             const BandWidth &bw = oTree.getBandWidth();
             for (int n = 0; n <= bw.getDepth(); n++) { // scale loop
                 for (int j = 0; j < 4; j++) {          // component loop
