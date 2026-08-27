@@ -80,7 +80,7 @@ template <int D> void ConvolutionOperator<D>::initialize(GaussExp<1> &kernel, do
     auto o_mra = this->getOperatorMRA();
 
     TreeBuilder<2> builder;
-    OperatorAdaptor adaptor(o_prec, o_mra.getMaxScale());
+    OperatorAdaptor<double> adaptor(o_prec, o_mra.getMaxScale());
 
     for (size_t i = 0; i < kernel.size(); i++) {
         // Rescale Gaussian for D-dim application
