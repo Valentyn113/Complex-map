@@ -89,6 +89,9 @@ public:
     T **getAuxData() { return this->aux; }
     double **getOperData() { return this->oData; }
 
+    /** @brief Band of a complex kernel; entries are null for a real one. */
+    ComplexDouble **getOperDataCplx() { return this->oData_cplx; }
+
     friend class ConvolutionCalculator<D, T>;
     friend class DerivativeCalculator<D, T>;
 
@@ -113,6 +116,7 @@ private:
     T *gData;
     T *fData;
     double *oData[D];
+    ComplexDouble *oData_cplx[D]{};
 
     void calcMaxDeltaL() {
         const auto &gl = this->gNode->getNodeIndex();

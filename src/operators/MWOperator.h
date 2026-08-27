@@ -49,7 +49,7 @@ public:
     MWOperator &operator=(const MWOperator &oper) = delete;
     virtual ~MWOperator() = default;
 
-    size_t size() const { return this->oper_exp.size(); }
+    size_t size() const { return isreal() ? this->oper_exp.size() : this->oper_exp_cplx.size(); }
     int getMaxBandWidth(int depth = -1) const;
     const std::vector<int> &getMaxBandWidths() const { return this->band_max; }
 
@@ -59,8 +59,30 @@ public:
     int getOperatorRoot() const { return this->oper_root; }
     int getOperatorReach() const { return this->oper_reach; }
 
+    /** @brief Whether the kernel is real.
+     *
+     * @details The expansion is held in one scalar or the other, never both:
+     * - `isreal()` means the terms live in `oper_exp` as `OperatorTree<double>`
+     * - `iscomplex()` means they live in `oper_exp_cplx` as `OperatorTree<ComplexDouble>`
+     * - only `TimeEvolutionOperator` builds a complex expansion
+     *
+     * @note Follows the `isreal`/`iscomplex` convention of `CompFunctionData`,
+     * which likewise holds a function in one scalar or the other.
+     */
+    int isreal() const { return this->raw_exp_cplx.empty(); }
+
+    /** @brief Whether the kernel has a non-zero imaginary part. */
+    int iscomplex() const { return not isreal(); }
+
     OperatorTree<double> &getComponent(int i, int d);
     const OperatorTree<double> &getComponent(int i, int d) const;
+
+    /** @brief Separable term `i` in direction `d` of a complex kernel.
+     *
+     * @note Aborts for a real operator; guard with `iscomplex()`.
+     */
+    OperatorTree<ComplexDouble> &getComponentCplx(int i, int d);
+    const OperatorTree<ComplexDouble> &getComponentCplx(int i, int d) const;
 
     std::array<OperatorTree<double> *, D> &operator[](int i) { return this->oper_exp[i]; }
     const std::array<OperatorTree<double> *, D> &operator[](int i) const { return this->oper_exp[i]; }
@@ -71,12 +93,15 @@ protected:
     MultiResolutionAnalysis<D> MRA;
     std::vector<std::array<OperatorTree<double> *, D>> oper_exp;
     std::vector<std::unique_ptr<OperatorTree<double>>> raw_exp;
+    std::vector<std::array<OperatorTree<ComplexDouble> *, D>> oper_exp_cplx;
+    std::vector<std::unique_ptr<OperatorTree<ComplexDouble>>> raw_exp_cplx;
     std::vector<int> band_max;
 
     MultiResolutionAnalysis<2> getOperatorMRA() const;
 
     void initOperExp(int M);
     void assign(int i, int d, OperatorTree<double> *oper) { this->oper_exp[i][d] = oper; }
+    void assign(int i, int d, OperatorTree<ComplexDouble> *oper) { this->oper_exp_cplx[i][d] = oper; }
 };
 
 } // namespace mrcpp
