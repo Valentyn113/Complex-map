@@ -84,6 +84,13 @@ public:
     OperatorTree<ComplexDouble> &getComponentCplx(int i, int d);
     const OperatorTree<ComplexDouble> &getComponentCplx(int i, int d) const;
 
+    /** @brief Band width of separable term `i` in direction `d`.
+     *
+     * @details Reads from whichever expansion is populated, so callers that
+     * only need the band do not have to know the scalar.
+     */
+    const BandWidth &getBandWidth(int i, int d) const;
+
     std::array<OperatorTree<double> *, D> &operator[](int i) { return this->oper_exp[i]; }
     const std::array<OperatorTree<double> *, D> &operator[](int i) const { return this->oper_exp[i]; }
 

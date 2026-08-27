@@ -60,6 +60,11 @@ template <int D> void MWOperator<D>::initOperExp(int M) {
         for (int d = 0; d < D; d++) assign(i, d, this->raw_exp[i].get());
 }
 
+template <int D> const BandWidth &MWOperator<D>::getBandWidth(int i, int d) const {
+    if (iscomplex()) return getComponentCplx(i, d).getBandWidth();
+    return getComponent(i, d).getBandWidth();
+}
+
 template <int D> OperatorTree<ComplexDouble> &MWOperator<D>::getComponentCplx(int i, int d) {
     if (i < 0 or static_cast<size_t>(i) >= this->oper_exp_cplx.size()) MSG_ERROR("Index out of bounds");
     if (d < 0 or d >= D) MSG_ERROR("Index out of bounds");

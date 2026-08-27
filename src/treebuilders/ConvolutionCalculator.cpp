@@ -105,8 +105,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::printTimers() con
 template <int D, typename T> void ConvolutionCalculator<D, T>::initBandSizes() {
     for (size_t i = 0; i < this->oper->size(); i++) {
         // IMPORTANT: only 0-th dimension!
-        const OperatorTree<double> &oTree = this->oper->getComponent(i, 0);
-        const BandWidth &bw = oTree.getBandWidth();
+        const BandWidth &bw = this->oper->getBandWidth(i, 0);
         auto *bsize = new MatrixXi(this->maxDepth, this->nComp2 + 1);
         bsize->setZero();
         for (int j = 0; j < this->maxDepth; j++) { calcBandSizeFactor(*bsize, j, bw); }
@@ -279,8 +278,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::applyOperComp(Ope
     int o_depth = os.fNode->getScale() - this->oper->getOperatorRoot();
     for (size_t i = 0; i < this->oper->size(); i++) {
         // IMPORTANT: only 0-th dimension
-        const OperatorTree<double> &ot = this->oper->getComponent(i, 0);
-        const BandWidth &bw = ot.getBandWidth();
+        const BandWidth &bw = this->oper->getBandWidth(i, 0);
         if (os.getMaxDeltaL() > bw.getMaxWidth(o_depth)) { continue; }
         os.fThreshold = getBandSizeFactor(i, o_depth, os) * fNorm;
         applyOperator(i, os);
