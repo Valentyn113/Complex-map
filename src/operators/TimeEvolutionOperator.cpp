@@ -68,7 +68,7 @@ namespace mrcpp {
  *
  */
 template <int D>
-TimeEvolutionOperator<D>::TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, int finest_scale, int max_Jpower)
+TimeEvolutionOperator<D>::TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time)
         : ConvolutionOperator<D>(mra, mra.getRootScale(), -10) // One can use ConvolutionOperator instead as well
 {
     int oldlevel = Printer::setPrintLevel(0);
@@ -77,13 +77,24 @@ TimeEvolutionOperator<D>::TimeEvolutionOperator(const MultiResolutionAnalysis<D>
     SchrodingerEvolution_CrossCorrelation cross_correlation(30, mra.getOrder(), mra.getScalingBasis().getScalingType());
     this->cross_correlation = &cross_correlation;
 
-    // will go outside of the constructor in future
-    if (finest_scale < 0)
-        initialize(time, max_Jpower);
-    else
-        initialize(time, finest_scale, max_Jpower);
+    initialize(time, 30); // will go outside of the constructor in future
 
     this->initOperExp(1); // this turns out to be important
+    Printer::setPrintLevel(oldlevel);
+}
+
+template <int D>
+TimeEvolutionOperator<D>::TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, int finest_scale, int max_Jpower)
+        : ConvolutionOperator<D>(mra, mra.getRootScale(), -10) {
+    int oldlevel = Printer::setPrintLevel(0);
+    this->setBuildPrec(prec);
+
+    SchrodingerEvolution_CrossCorrelation cross_correlation(30, mra.getOrder(), mra.getScalingBasis().getScalingType());
+    this->cross_correlation = &cross_correlation;
+
+    initialize(time, finest_scale, max_Jpower);
+
+    this->initOperExp(1);
     Printer::setPrintLevel(oldlevel);
 }
 

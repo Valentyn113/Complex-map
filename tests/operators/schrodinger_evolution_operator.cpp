@@ -42,8 +42,6 @@ TEST_CASE("Apply Schrodinger's evolution operator", "[apply_schrodinger_evolutio
     const auto order = 4;
     const auto prec = 1.0e-7;
 
-    int finest_scale = 7;
-
     double t1 = 0.001;
     double delta_t = 0.03;
     double t2 = delta_t + t1;
@@ -52,8 +50,9 @@ TEST_CASE("Apply Schrodinger's evolution operator", "[apply_schrodinger_evolutio
     auto world = mrcpp::BoundingBox<1>(min_scale);
     auto MRA = mrcpp::MultiResolutionAnalysis<1>(world, basis, max_depth);
 
-    // One operator holding the whole semigroup as a complex operator tree
-    mrcpp::TimeEvolutionOperator<1> Exp(MRA, prec, delta_t, finest_scale);
+    // One operator holding the whole semigroup as a complex operator tree,
+    // built adaptively from the precision as every convolution operator is
+    mrcpp::TimeEvolutionOperator<1> Exp(MRA, prec, delta_t);
     REQUIRE(Exp.iscomplex());
 
     double sigma = 0.001;
@@ -78,6 +77,44 @@ TEST_CASE("Apply Schrodinger's evolution operator", "[apply_schrodinger_evolutio
 
     // The kernel really is complex: a real-valued tree would leave this at zero
     REQUIRE(Exp.getComponentCplx(0, 0).getSquareNorm() > 0.0);
+}
+
+TEST_CASE("Apply Schrodinger's evolution operator on a uniform grid", "[apply_schrodinger_uniform], [schrodinger_evolution_operator], [mw_operator]") {
+    const auto min_scale = 0;
+    const auto max_depth = 25;
+    const auto order = 4;
+    const auto prec = 1.0e-7;
+
+    double t1 = 0.001;
+    double delta_t = 0.03;
+    double t2 = delta_t + t1;
+
+    auto basis = mrcpp::LegendreBasis(order);
+    auto world = mrcpp::BoundingBox<1>(min_scale);
+    auto MRA = mrcpp::MultiResolutionAnalysis<1>(world, basis, max_depth);
+
+    // The fixed-scale overload, bypassing the adaptive build
+    mrcpp::TimeEvolutionOperator<1> Exp(MRA, prec, delta_t, 7);
+    REQUIRE(Exp.iscomplex());
+
+    double sigma = 0.001;
+    double x0 = 0.5;
+
+    auto f = [sigma, x0, t = t1](const mrcpp::Coord<1> &r) -> ComplexDouble { return mrcpp::free_particle_analytical_solution(r[0], x0, t, sigma); };
+    auto g = [sigma, x0, t = t2](const mrcpp::Coord<1> &r) -> ComplexDouble { return mrcpp::free_particle_analytical_solution(r[0], x0, t, sigma); };
+
+    mrcpp::FunctionTree<1, ComplexDouble> f_tree(MRA);
+    mrcpp::project<1, ComplexDouble>(prec, f_tree, f);
+    mrcpp::FunctionTree<1, ComplexDouble> g_tree(MRA);
+    mrcpp::project<1, ComplexDouble>(prec, g_tree, g);
+
+    mrcpp::FunctionTree<1, ComplexDouble> fout_tree(MRA);
+    mrcpp::apply<1, ComplexDouble>(prec, fout_tree, Exp, f_tree, -1, false);
+
+    mrcpp::FunctionTree<1, ComplexDouble> error(MRA);
+    mrcpp::add<1, ComplexDouble>(prec, error, {1.0, 0.0}, fout_tree, {-1.0, 0.0}, g_tree, -1, false, false);
+    double tolerance = prec * prec / 25.0;
+    REQUIRE(error.getSquareNorm() == Catch::Approx(0.0).margin(tolerance));
 }
 
 } // namespace schrodinger_evolution_operator

@@ -56,20 +56,28 @@ public:
      * @param[in] mra: which MRA to operate on
      * @param[in] prec: build precision
      * @param[in] time: time step \f$ t \f$
-     * @param[in] finest_scale: uniform refinement down to this scale
-     * @param[in] max_Jpower: number of power integrals retained
      *
-     * @details The kernel is complex, and is held as a single
+     * @details Built adaptively from the precision, as every other convolution
+     * operator is. The kernel is complex and is held as a single
      * `OperatorTree<ComplexDouble>` -- the operator-side counterpart of a
-     * complex `FunctionTree`:
-     * - `finest_scale < 0` means adaptive construction
-     * - otherwise the operator is refined uniformly down to `finest_scale`
-     * - refinement thresholds on the modulus of the coefficients
+     * complex `FunctionTree` -- with refinement thresholding on the modulus of
+     * the coefficients.
      *
      * @note Applying this to a real `FunctionTree` aborts; project the input as
      * `ComplexDouble` first, or let the `CompFunction` overload promote it.
      */
-    TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, int finest_scale = -1, int max_Jpower = 30);
+    TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time);
+
+    /** @brief As above, refined uniformly down to a given scale.
+     *
+     * @param[in] finest_scale: uniform refinement down to this scale
+     * @param[in] max_Jpower: number of power integrals retained
+     *
+     * @details Bypasses the adaptive build. Kept for callers that need a fixed
+     * grid, in the same spirit as the `root`/`reach` overloads of
+     * `PoissonOperator` and `HelmholtzOperator`.
+     */
+    TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, int finest_scale, int max_Jpower = 30);
 
     /** @brief Rejects the old `bool imaginary` argument at compile time.
      *
