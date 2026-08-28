@@ -27,7 +27,6 @@
 #include "BandWidth.h"
 #include "NodeAllocator.h"
 #include "OperatorNode.h"
-#include "OperatorNode.h"
 #include "TreeIterator.h"
 #include "utils/Printer.h"
 #include "utils/tree_utils.h"
@@ -110,7 +109,9 @@ template <typename T> void OperatorTree<T>::clearBandWidth() {
  *
  */
 template <typename T> void OperatorTree<T>::calcBandWidth(double prec) {
-    if (this->bandWidth == nullptr) clearBandWidth();
+    // clearBandWidth() is a no-op when there is nothing to free, so calling it
+    // unconditionally is what keeps a rebuild from leaking the previous one.
+    this->clearBandWidth();
     this->bandWidth = new BandWidth(this->getDepth());
 
     VectorXi max_transl;

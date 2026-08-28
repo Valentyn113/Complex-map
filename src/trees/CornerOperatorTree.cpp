@@ -42,7 +42,7 @@ namespace mrcpp {
  *
  */
 template <typename T> void CornerOperatorTree<T>::calcBandWidth(double prec) {
-    if (this->bandWidth == nullptr) this->clearBandWidth();
+    this->clearBandWidth();
     this->bandWidth = new BandWidth(this->getDepth());
 
     VectorXi max_transl;

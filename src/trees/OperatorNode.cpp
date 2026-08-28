@@ -65,8 +65,12 @@ template <typename T> double OperatorNode<T>::calcComponentNorm(int i) const {
     int kp1_d = this->getKp1_d();
     const Eigen::Matrix<T, Eigen::Dynamic, 1> comp_vec = coef_vec.segment(i * kp1_d, kp1_d);
 
-    // Bounds are taken on the moduli, so they are unchanged when the imaginary
-    // part is zero -- a real kernel thresholds exactly as it did before.
+    // matrix_norm_1, _inf and _2 are all entrywise (colwise/rowwise lpNorm<1>
+    // and lpNorm<2>), so taking the moduli first leaves every one of them
+    // unchanged: signs and phases never enter these particular bounds. A
+    // complex kernel whose imaginary part is zero therefore thresholds exactly
+    // as the real tree does. Note _2 is Frobenius here, not the spectral norm,
+    // which is what makes this exact rather than merely conservative.
     MatrixXd comp_mat;
     if constexpr (std::is_same<T, ComplexDouble>::value) {
         comp_mat = Eigen::Map<const MatrixXcd>(comp_vec.data(), kp1, kp1).cwiseAbs();
@@ -101,7 +105,7 @@ template <typename T> double OperatorNode<T>::calcComponentNorm(int i) const {
  * For example, \f$ \alpha_l^n = \text{getComponent}(3) \f$.
  *
  */
-template <typename T> Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> OperatorNode<T>::getComponent(int i) {
+template <typename T> Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> OperatorNode<T>::getComponent(int i) const {
     Eigen::Matrix<T, Eigen::Dynamic, 1> coef_vec;
     this->getCoefs(coef_vec);
 

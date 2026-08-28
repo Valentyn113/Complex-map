@@ -61,7 +61,7 @@ public:
      * \gamma_l^n, \alpha_l^n \f$ for that pair, selected by
      * \f$ i = 0, 1, 2, 3 \f$ respectively.
      */
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> getComponent(int i);
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> getComponent(int i) const;
 
     friend class OperatorTree<T>;
     friend class NodeAllocator<2, T>;

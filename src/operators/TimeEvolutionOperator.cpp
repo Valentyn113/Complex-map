@@ -78,6 +78,7 @@ TimeEvolutionOperator<D>::TimeEvolutionOperator(const MultiResolutionAnalysis<D>
     this->cross_correlation = &cross_correlation;
 
     initialize(time, 30); // will go outside of the constructor in future
+    this->cross_correlation = nullptr; // the object above dies with this scope
 
     this->initOperExp(1); // this turns out to be important
     Printer::setPrintLevel(oldlevel);
@@ -93,6 +94,7 @@ TimeEvolutionOperator<D>::TimeEvolutionOperator(const MultiResolutionAnalysis<D>
     this->cross_correlation = &cross_correlation;
 
     initialize(time, finest_scale, max_Jpower);
+    this->cross_correlation = nullptr; // the object above dies with this scope
 
     this->initOperExp(1);
     Printer::setPrintLevel(oldlevel);

@@ -85,6 +85,15 @@ public:
      * that position would otherwise bind silently to `finest_scale`.
      */
     TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, bool imaginary, int max_Jpower = 30) = delete;
+
+    /** @brief Rejects the old fixed-scale signature at compile time.
+     *
+     * @details `(mra, prec, time, 7, false)` would otherwise bind to the
+     * `finest_scale, max_Jpower` overload with `max_Jpower = 0`, since `int`
+     * is an exact match in the fourth position and `bool` converts to `int`
+     * in the fifth.
+     */
+    TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, int finest_scale, bool imaginary, int max_Jpower = 30) = delete;
     TimeEvolutionOperator(const TimeEvolutionOperator &oper) = delete;
     TimeEvolutionOperator &operator=(const TimeEvolutionOperator &oper) = delete;
     virtual ~TimeEvolutionOperator() = default;

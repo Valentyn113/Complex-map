@@ -34,6 +34,7 @@ namespace mrcpp {
 
 template <int D> void MWOperator<D>::initOperExp(int M) {
     // The expansion is held in one scalar or the other, never both.
+    if (not this->raw_exp.empty() and not this->raw_exp_cplx.empty()) MSG_ABORT("Both a real and a complex raw expansion");
     if (iscomplex()) {
         if (this->raw_exp_cplx.size() < static_cast<size_t>(M)) MSG_ABORT("Incompatible raw expansion");
         this->oper_exp_cplx.clear();
@@ -42,6 +43,7 @@ template <int D> void MWOperator<D>::initOperExp(int M) {
             otrees.fill(nullptr);
             this->oper_exp_cplx.push_back(otrees);
         }
+        this->oper_exp.clear();
         for (int i = 0; i < M; i++)
             for (int d = 0; d < D; d++) assign(i, d, this->raw_exp_cplx[i].get());
         return;

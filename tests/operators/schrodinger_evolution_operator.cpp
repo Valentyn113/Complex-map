@@ -27,6 +27,8 @@
 
 #include "factory_functions.h"
 
+#include <cmath>
+
 #include "functions/special_functions.h"
 #include "operators/MWOperator.h"
 #include "operators/TimeEvolutionOperator.h"
@@ -75,8 +77,19 @@ TEST_CASE("Apply Schrodinger's evolution operator", "[apply_schrodinger_evolutio
     double tolerance = prec * prec / 25.0;
     REQUIRE(error.getSquareNorm() == Catch::Approx(0.0).margin(tolerance));
 
-    // The kernel really is complex: a real-valued tree would leave this at zero
-    REQUIRE(Exp.getComponentCplx(0, 0).getSquareNorm() > 0.0);
+    // The kernel is genuinely complex, not a real tree in complex storage:
+    // propagating a purely real state has to generate an imaginary part.
+    auto real_in = [sigma, x0](const mrcpp::Coord<1> &r) -> ComplexDouble {
+        double dx = r[0] - x0;
+        return {std::exp(-dx * dx / (2.0 * sigma)), 0.0};
+    };
+    mrcpp::FunctionTree<1, ComplexDouble> real_tree(MRA);
+    mrcpp::project<1, ComplexDouble>(prec, real_tree, real_in);
+    REQUIRE(real_tree.Imag()->getSquareNorm() == Catch::Approx(0.0).margin(1.0e-20));
+
+    mrcpp::FunctionTree<1, ComplexDouble> real_out(MRA);
+    mrcpp::apply<1, ComplexDouble>(prec, real_out, Exp, real_tree, -1, false);
+    REQUIRE(real_out.Imag()->getSquareNorm() > 1.0e-12);
 }
 
 TEST_CASE("Apply Schrodinger's evolution operator on a uniform grid", "[apply_schrodinger_uniform], [schrodinger_evolution_operator], [mw_operator]") {

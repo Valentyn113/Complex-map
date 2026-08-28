@@ -29,6 +29,7 @@
 
 #include "trees/MultiResolutionAnalysis.h"
 #include "trees/OperatorTree.h"
+#include "utils/Printer.h"
 
 namespace mrcpp {
 
@@ -59,7 +60,7 @@ public:
     int getOperatorRoot() const { return this->oper_root; }
     int getOperatorReach() const { return this->oper_reach; }
 
-    /** @brief Whether the kernel is real.
+    /** @brief Whether the operator stores real coefficients.
      *
      * @details The expansion is held in one scalar or the other, never both:
      * - `isreal()` means the terms live in `oper_exp` as `OperatorTree<double>`
@@ -71,7 +72,12 @@ public:
      */
     int isreal() const { return this->raw_exp_cplx.empty(); }
 
-    /** @brief Whether the kernel has a non-zero imaginary part. */
+    /** @brief Whether the operator stores complex coefficients.
+     *
+     * @note This is the storage type, not a statement about the coefficients:
+     * a complex expansion whose imaginary part happens to vanish still reports
+     * `iscomplex()`.
+     */
     int iscomplex() const { return not isreal(); }
 
     OperatorTree<double> &getComponent(int i, int d);
@@ -91,8 +97,15 @@ public:
      */
     const BandWidth &getBandWidth(int i, int d) const;
 
-    std::array<OperatorTree<double> *, D> &operator[](int i) { return this->oper_exp[i]; }
-    const std::array<OperatorTree<double> *, D> &operator[](int i) const { return this->oper_exp[i]; }
+    /** @note Real expansions only; aborts on a complex operator. */
+    std::array<OperatorTree<double> *, D> &operator[](int i) {
+        if (iscomplex()) MSG_ABORT("operator[] is not available for a complex expansion");
+        return this->oper_exp[i];
+    }
+    const std::array<OperatorTree<double> *, D> &operator[](int i) const {
+        if (iscomplex()) MSG_ABORT("operator[] is not available for a complex expansion");
+        return this->oper_exp[i];
+    }
 
 protected:
     int oper_root;

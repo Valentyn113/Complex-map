@@ -24,6 +24,8 @@
  */
 
 #include "apply.h"
+
+#include <type_traits>
 #include "ConvolutionCalculator.h"
 #include "CopyAdaptor.h"
 #include "DefaultCalculator.h"
