@@ -100,10 +100,12 @@ public:
     /** @note Real expansions only; aborts on a complex operator. */
     std::array<OperatorTree<double> *, D> &operator[](int i) {
         if (iscomplex()) MSG_ABORT("operator[] is not available for a complex expansion");
+        if (i < 0 or static_cast<size_t>(i) >= this->oper_exp.size()) MSG_ABORT("Index out of bounds");
         return this->oper_exp[i];
     }
     const std::array<OperatorTree<double> *, D> &operator[](int i) const {
         if (iscomplex()) MSG_ABORT("operator[] is not available for a complex expansion");
+        if (i < 0 or static_cast<size_t>(i) >= this->oper_exp.size()) MSG_ABORT("Index out of bounds");
         return this->oper_exp[i];
     }
 

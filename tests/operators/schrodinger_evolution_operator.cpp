@@ -28,6 +28,7 @@
 #include "factory_functions.h"
 
 #include <cmath>
+#include <memory>
 
 #include "functions/special_functions.h"
 #include "operators/MWOperator.h"
@@ -85,11 +86,18 @@ TEST_CASE("Apply Schrodinger's evolution operator", "[apply_schrodinger_evolutio
     };
     mrcpp::FunctionTree<1, ComplexDouble> real_tree(MRA);
     mrcpp::project<1, ComplexDouble>(prec, real_tree, real_in);
-    REQUIRE(real_tree.Imag()->getSquareNorm() == Catch::Approx(0.0).margin(1.0e-20));
+
+    // Real() and Imag() hand back a newly allocated tree, so own the result
+    std::unique_ptr<mrcpp::FunctionTree<1, double>> in_imag(real_tree.Imag());
+    REQUIRE(in_imag->getSquareNorm() == Catch::Approx(0.0).margin(1.0e-20));
 
     mrcpp::FunctionTree<1, ComplexDouble> real_out(MRA);
     mrcpp::apply<1, ComplexDouble>(prec, real_out, Exp, real_tree, -1, false);
-    REQUIRE(real_out.Imag()->getSquareNorm() > 1.0e-12);
+
+    std::unique_ptr<mrcpp::FunctionTree<1, double>> out_imag(real_out.Imag());
+    // The input carries no imaginary part, so anything here came from the
+    // kernel. Well clear of projection noise at prec = 1e-7.
+    REQUIRE(out_imag->getSquareNorm() > 1.0e-12);
 }
 
 TEST_CASE("Apply Schrodinger's evolution operator on a uniform grid", "[apply_schrodinger_uniform], [schrodinger_evolution_operator], [mw_operator]") {

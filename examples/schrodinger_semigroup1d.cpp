@@ -7,6 +7,8 @@
 #include <MRCPP/Printer>
 #include <MRCPP/Timer>
 
+#include <memory>
+
 const auto min_scale = 0;
 const auto max_depth = 25;
 
@@ -104,10 +106,11 @@ int main(int argc, char **argv) {
     mrcpp::Plotter<1> plot(o);
     plot.setRange(a);
 
-    auto Re_error = error.Real();
-    auto Im_error = error.Imag();
-    auto Re_f_tree = f_tree.Real();
-    auto Im_f_tree = f_tree.Imag();
+    // Real() and Imag() allocate a new tree each; take ownership
+    std::unique_ptr<mrcpp::FunctionTree<1, double>> Re_error(error.Real());
+    std::unique_ptr<mrcpp::FunctionTree<1, double>> Im_error(error.Imag());
+    std::unique_ptr<mrcpp::FunctionTree<1, double>> Re_f_tree(f_tree.Real());
+    std::unique_ptr<mrcpp::FunctionTree<1, double>> Im_f_tree(f_tree.Imag());
     plot.linePlot({nPts}, *Re_error, "Re_error");   // Write to file Re_error.line
     plot.linePlot({nPts}, *Im_error, "Im_error");   // Write to file Im_error.line
     plot.linePlot({nPts}, *Re_f_tree, "Re_f_tree"); // Write to file Re_f_tree.line

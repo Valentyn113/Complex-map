@@ -29,6 +29,8 @@
 #include "utils/Printer.h"
 #include "utils/math_utils.h"
 
+#include <type_traits>
+
 using namespace Eigen;
 
 namespace mrcpp {
@@ -65,12 +67,12 @@ template <typename T> double OperatorNode<T>::calcComponentNorm(int i) const {
     int kp1_d = this->getKp1_d();
     const Eigen::Matrix<T, Eigen::Dynamic, 1> comp_vec = coef_vec.segment(i * kp1_d, kp1_d);
 
-    // matrix_norm_1, _inf and _2 are all entrywise (colwise/rowwise lpNorm<1>
-    // and lpNorm<2>), so taking the moduli first leaves every one of them
-    // unchanged: signs and phases never enter these particular bounds. A
-    // complex kernel whose imaginary part is zero therefore thresholds exactly
-    // as the real tree does. Note _2 is Frobenius here, not the spectral norm,
-    // which is what makes this exact rather than merely conservative.
+    // All three bounds depend only on coefficient magnitudes: matrix_norm_1
+    // and matrix_norm_inf are absolute column and row sums, and matrix_norm_2
+    // is Eigen's lpNorm<2>, i.e. Frobenius rather than the spectral norm.
+    // Replacing a complex component by its entrywise moduli therefore leaves
+    // every bound unchanged, and a kernel with zero imaginary part thresholds
+    // exactly as the corresponding real tree does.
     MatrixXd comp_mat;
     if constexpr (std::is_same<T, ComplexDouble>::value) {
         comp_mat = Eigen::Map<const MatrixXcd>(comp_vec.data(), kp1, kp1).cwiseAbs();

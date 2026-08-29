@@ -51,6 +51,7 @@ template <int D> void MWOperator<D>::initOperExp(int M) {
 
     if (this->raw_exp.size() < static_cast<size_t>(M)) MSG_ABORT("Incompatible raw expansion");
     this->oper_exp.clear();
+    this->oper_exp_cplx.clear();
     for (int m = 0; m < M; m++) {
         std::array<OperatorTree<double> *, D> otrees;
         otrees.fill(nullptr);
