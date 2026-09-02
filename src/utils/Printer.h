@@ -34,6 +34,8 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <execinfo.h>
+#include <unistd.h>
 #include <string>
 #include <complex>
 
@@ -165,6 +167,9 @@ template <int D, typename T> void tree(int level, const std::string &txt, const 
 #define MSG_ABORT(STR)                                                                                                                    \
     {                                                                                                                                     \
         *mrcpp::Printer::out << "Error: " << __FILE__ << ": " << __func__ << "(), line " << __LINE__ << ": " << STR << std::endl;         \
+        void* array[15]; \
+        size_t size = backtrace(array, 15); \
+        backtrace_symbols_fd(array, size, STDOUT_FILENO); \
         abort();                                                                                                                          \
     }
 
