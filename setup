@@ -28,6 +28,7 @@ Options:
   --enable-tests=<TESTS>                 Enable tests [default: True].
   --enable-examples                      Enable code examples [default: False].
   --eigen3=<STRING>                      Behaviour for finding/fetching Eigen3 (default, onlylocal, onlyfetch) [default: default].
+  --catch2=<STRING>                      Behaviour for finding/fetching Catch2 (default, onlylocal, onlyfetch) [default: default].
   --type=<TYPE>                          Set the CMake build type (debug, release, relwithdebinfo, minsizerel) [default: release].
   --generator=<STRING>                   Set the CMake build system generator [default: Unix Makefiles].
   --show                                 Show CMake command and exit.
@@ -54,6 +55,7 @@ def gen_cmake_command(options, arguments):
     command.append('-DENABLE_TESTS={0}'.format(arguments['--enable-tests']))
     command.append('-DENABLE_EXAMPLES={0}'.format(arguments['--enable-examples']))
     command.append('-DEIGEN3_FIND_BEHAVIOUR={0}'.format(arguments['--eigen3']))
+    command.append('-DCATCH2_FIND_BEHAVIOUR={0}'.format(arguments['--catch2']))
     command.append('-DCMAKE_BUILD_TYPE={0}'.format(arguments['--type']))
     command.append('-G"{0}"'.format(arguments['--generator']))
     if arguments['--cmake-options'] != "''":

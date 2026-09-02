@@ -1,6 +1,6 @@
 cpm_set_find_behaviour(${EIGEN3_FIND_BEHAVIOUR})
 CPMAddPackage(
-  NAME eigen3
+  NAME Eigen3
   VERSION "3.4...<4.0"
   GIT_TAG 3.4.0
   GITLAB_REPOSITORY libeigen/eigen
