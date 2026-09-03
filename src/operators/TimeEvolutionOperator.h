@@ -51,48 +51,18 @@ template <int D>
 class TimeEvolutionOperator : public ConvolutionOperator<D> // One can use ConvolutionOperator instead as well
 {
 public:
-    /** @brief Semigroup \f$ \exp(i t \partial_x^2) \f$ at one time moment.
-     *
-     * @param[in] mra: which MRA to operate on
-     * @param[in] prec: build precision
-     * @param[in] time: time step \f$ t \f$
-     *
-     * @details Built adaptively from the precision, as every other convolution
-     * operator is. The kernel is complex and is held as a single
-     * `OperatorTree<ComplexDouble>` -- the operator-side counterpart of a
-     * complex `FunctionTree` -- with refinement thresholding on the modulus of
-     * the coefficients.
+    /** @brief Semigroup \f$ \exp(i t \partial_x^2) \f$, refined adaptively.
      *
      * @note Applying this to a real `FunctionTree` aborts; project the input as
      * `ComplexDouble` first, or let the `CompFunction` overload promote it.
      */
     TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time);
 
-    /** @brief As above, refined uniformly down to a given scale.
-     *
-     * @param[in] finest_scale: uniform refinement down to this scale
-     * @param[in] max_Jpower: number of power integrals retained
-     *
-     * @details Bypasses the adaptive build. Kept for callers that need a fixed
-     * grid, in the same spirit as the `root`/`reach` overloads of
-     * `PoissonOperator` and `HelmholtzOperator`.
-     */
+    /// @brief As above, on a uniformly refined operator tree.
     TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, int finest_scale, int max_Jpower = 30);
 
-    /** @brief Rejects the old `bool imaginary` argument at compile time.
-     *
-     * @details The semigroup is no longer built one part at a time. A `bool` in
-     * that position would otherwise bind silently to `finest_scale`.
-     */
+    /// @brief Rejects the legacy signatures carrying the removed `imaginary` argument.
     TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, bool imaginary, int max_Jpower = 30) = delete;
-
-    /** @brief Rejects the old fixed-scale signature at compile time.
-     *
-     * @details `(mra, prec, time, 7, false)` would otherwise bind to the
-     * `finest_scale, max_Jpower` overload with `max_Jpower = 0`, since `int`
-     * is an exact match in the fourth position and `bool` converts to `int`
-     * in the fifth.
-     */
     TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, int finest_scale, bool imaginary, int max_Jpower = 30) = delete;
     TimeEvolutionOperator(const TimeEvolutionOperator &oper) = delete;
     TimeEvolutionOperator &operator=(const TimeEvolutionOperator &oper) = delete;

@@ -115,7 +115,7 @@ private:
     T *aux[D + 1];
     T *gData;
     T *fData;
-    double *oData[D];
+    double *oData[D]{};
     ComplexDouble *oData_cplx[D]{};
 
     void calcMaxDeltaL() {

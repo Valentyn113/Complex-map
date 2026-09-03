@@ -69,30 +69,30 @@ template <int D> const BandWidth &MWOperator<D>::getBandWidth(int i, int d) cons
 }
 
 template <int D> OperatorTree<ComplexDouble> &MWOperator<D>::getComponentCplx(int i, int d) {
-    if (i < 0 or static_cast<size_t>(i) >= this->oper_exp_cplx.size()) MSG_ERROR("Index out of bounds");
-    if (d < 0 or d >= D) MSG_ERROR("Index out of bounds");
-    if (this->oper_exp_cplx[i][d] == nullptr) MSG_ERROR("Invalid component");
+    if (i < 0 or static_cast<size_t>(i) >= this->oper_exp_cplx.size()) MSG_ABORT("Index out of bounds");
+    if (d < 0 or d >= D) MSG_ABORT("Index out of bounds");
+    if (this->oper_exp_cplx[i][d] == nullptr) MSG_ABORT("Invalid component");
     return *this->oper_exp_cplx[i][d];
 }
 
 template <int D> const OperatorTree<ComplexDouble> &MWOperator<D>::getComponentCplx(int i, int d) const {
-    if (i < 0 or static_cast<size_t>(i) >= this->oper_exp_cplx.size()) MSG_ERROR("Index out of bounds");
-    if (d < 0 or d >= D) MSG_ERROR("Index out of bounds");
-    if (this->oper_exp_cplx[i][d] == nullptr) MSG_ERROR("Invalid component");
+    if (i < 0 or static_cast<size_t>(i) >= this->oper_exp_cplx.size()) MSG_ABORT("Index out of bounds");
+    if (d < 0 or d >= D) MSG_ABORT("Index out of bounds");
+    if (this->oper_exp_cplx[i][d] == nullptr) MSG_ABORT("Invalid component");
     return *this->oper_exp_cplx[i][d];
 }
 
 template <int D> OperatorTree<double> &MWOperator<D>::getComponent(int i, int d) {
-    if (i < 0 or static_cast<size_t>(i) >= this->oper_exp.size()) MSG_ERROR("Index out of bounds");
-    if (d < 0 or d >= D) MSG_ERROR("Dimension out of bounds");
-    if (this->oper_exp[i][d] == nullptr) MSG_ERROR("Invalid component");
+    if (i < 0 or static_cast<size_t>(i) >= this->oper_exp.size()) MSG_ABORT("Index out of bounds");
+    if (d < 0 or d >= D) MSG_ABORT("Dimension out of bounds");
+    if (this->oper_exp[i][d] == nullptr) MSG_ABORT("Invalid component");
     return *this->oper_exp[i][d];
 }
 
 template <int D> const OperatorTree<double> &MWOperator<D>::getComponent(int i, int d) const {
-    if (i < 0 or static_cast<size_t>(i) >= this->oper_exp.size()) MSG_ERROR("Index out of bounds");
-    if (d < 0 or d >= D) MSG_ERROR("Dimension out of bounds");
-    if (this->oper_exp[i][d] == nullptr) MSG_ERROR("Invalid component");
+    if (i < 0 or static_cast<size_t>(i) >= this->oper_exp.size()) MSG_ABORT("Index out of bounds");
+    if (d < 0 or d >= D) MSG_ABORT("Dimension out of bounds");
+    if (this->oper_exp[i][d] == nullptr) MSG_ABORT("Invalid component");
     return *this->oper_exp[i][d];
 }
 

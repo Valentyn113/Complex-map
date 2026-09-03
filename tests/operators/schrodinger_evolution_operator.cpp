@@ -53,8 +53,7 @@ TEST_CASE("Apply Schrodinger's evolution operator", "[apply_schrodinger_evolutio
     auto world = mrcpp::BoundingBox<1>(min_scale);
     auto MRA = mrcpp::MultiResolutionAnalysis<1>(world, basis, max_depth);
 
-    // One operator holding the whole semigroup as a complex operator tree,
-    // built adaptively from the precision as every convolution operator is
+    // One operator holding the whole semigroup as a complex operator tree
     mrcpp::TimeEvolutionOperator<1> Exp(MRA, prec, delta_t);
     REQUIRE(Exp.iscomplex());
 
@@ -78,8 +77,7 @@ TEST_CASE("Apply Schrodinger's evolution operator", "[apply_schrodinger_evolutio
     double tolerance = prec * prec / 25.0;
     REQUIRE(error.getSquareNorm() == Catch::Approx(0.0).margin(tolerance));
 
-    // The kernel is genuinely complex, not a real tree in complex storage:
-    // propagating a purely real state has to generate an imaginary part.
+    // This propagator generates an imaginary component from a real state.
     auto real_in = [sigma, x0](const mrcpp::Coord<1> &r) -> ComplexDouble {
         double dx = r[0] - x0;
         return {std::exp(-dx * dx / (2.0 * sigma)), 0.0};
@@ -87,7 +85,7 @@ TEST_CASE("Apply Schrodinger's evolution operator", "[apply_schrodinger_evolutio
     mrcpp::FunctionTree<1, ComplexDouble> real_tree(MRA);
     mrcpp::project<1, ComplexDouble>(prec, real_tree, real_in);
 
-    // Real() and Imag() hand back a newly allocated tree, so own the result
+    // The caller owns the trees returned by Real() and Imag()
     std::unique_ptr<mrcpp::FunctionTree<1, double>> in_imag(real_tree.Imag());
     REQUIRE(in_imag->getSquareNorm() == Catch::Approx(0.0).margin(1.0e-20));
 
@@ -95,8 +93,7 @@ TEST_CASE("Apply Schrodinger's evolution operator", "[apply_schrodinger_evolutio
     mrcpp::apply<1, ComplexDouble>(prec, real_out, Exp, real_tree, -1, false);
 
     std::unique_ptr<mrcpp::FunctionTree<1, double>> out_imag(real_out.Imag());
-    // The input carries no imaginary part, so anything here came from the
-    // kernel. Well clear of projection noise at prec = 1e-7.
+    // Above the projection-noise level for this prec
     REQUIRE(out_imag->getSquareNorm() > 1.0e-12);
 }
 

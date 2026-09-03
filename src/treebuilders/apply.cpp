@@ -132,7 +132,8 @@ template <int D> void apply(double prec, CompFunction<D> &out, ConvolutionOperat
                     apply(prec, *out.CompD[ocomp], oper, *inp.CompD[icomp], maxIter, absPrec);
                     if (abs(metric[icomp][ocomp] - 1.0) > MachinePrec) { out.CompD[ocomp]->rescale(metric[icomp][ocomp].real()); }
                 } else if (inp.isreal()) {
-                    // Complex kernel on a real input: promote, as the derivative overload does
+                    // Promote a real input before applying a complex operator,
+                    // as the DerivativeOperator overload below does
                     out.defcomplex();
                     if (out.CompC[ocomp] == nullptr) out.alloc_comp(ocomp);
                     std::unique_ptr<FunctionTree<D, ComplexDouble>> inp_c(inp.CompD[icomp]->CopyTreeToComplex());

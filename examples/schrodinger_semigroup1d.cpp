@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
     mrcpp::print::header(0, "Building operator");
     mrcpp::print::footer(0, timer, 2);
 
-    // Time evolution operator Exp(delta_t): one complex operator tree
+    // Time evolution operator Exp(delta_t)
     mrcpp::TimeEvolutionOperator<1> Exp(MRA, prec, delta_t, finest_scale);
     println(0, Exp.getComponentCplx(0, 0));
 
@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
     mrcpp::Plotter<1> plot(o);
     plot.setRange(a);
 
-    // Real() and Imag() allocate a new tree each; take ownership
+    // The caller owns the trees returned by Real() and Imag()
     std::unique_ptr<mrcpp::FunctionTree<1, double>> Re_error(error.Real());
     std::unique_ptr<mrcpp::FunctionTree<1, double>> Im_error(error.Imag());
     std::unique_ptr<mrcpp::FunctionTree<1, double>> Re_f_tree(f_tree.Real());

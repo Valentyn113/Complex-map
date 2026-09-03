@@ -34,11 +34,7 @@ namespace mrcpp {
  *
  * @brief Non-standard form of a separable operator.
  *
- * @details Templated on the coefficient type the same way `FunctionTree` is:
- * real for Poisson, Helmholtz, the derivative operators and identity, complex
- * for the Schrodinger semigroup. A caller holds whichever matches the kernel,
- * so a real operator keeps real storage and only time evolution pays for being
- * complex.
+ * @tparam T Coefficient type, `double` or `ComplexDouble`.
  */
 template <typename T = double> class OperatorTree : public MWTree<2, T> {
 public:

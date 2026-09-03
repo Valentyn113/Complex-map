@@ -56,16 +56,15 @@
 
 namespace mrcpp {
 
-/** @brief A uniform constructor for TimeEvolutionOperator class.
+/** @brief An adaptive constructor for TimeEvolutionOperator class.
  *
  * @param[in] mra: MRA.
  * @param[in] prec: precision.
  * @param[in] time: the time moment (step).
- * @param[in] finest_scale: the operator tree is constructed uniformly down to this scale.
- * @param[in] max_Jpower: maximum amount of power integrals used.
  *
- * @details Constructs either real or imaginary part of the Schrodinger semigroup at a given time moment.
+ * @details Constructs the complete complex Schrodinger semigroup at a given time moment.
  *
+ * @note For technical reasons the operator tree is constructed no deeper than to scale \f$ n = 18 \f$.
  */
 template <int D>
 TimeEvolutionOperator<D>::TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time)
@@ -77,13 +76,24 @@ TimeEvolutionOperator<D>::TimeEvolutionOperator(const MultiResolutionAnalysis<D>
     SchrodingerEvolution_CrossCorrelation cross_correlation(30, mra.getOrder(), mra.getScalingBasis().getScalingType());
     this->cross_correlation = &cross_correlation;
 
-    initialize(time, 30); // will go outside of the constructor in future
+    initialize(time, 30);
     this->cross_correlation = nullptr; // the object above dies with this scope
 
-    this->initOperExp(1); // this turns out to be important
+    this->initOperExp(1); // one separable term
     Printer::setPrintLevel(oldlevel);
 }
 
+/** @brief A uniform constructor for TimeEvolutionOperator class.
+ *
+ * @param[in] mra: MRA.
+ * @param[in] prec: precision.
+ * @param[in] time: the time moment (step).
+ * @param[in] finest_scale: the operator tree is constructed uniformly down to this scale.
+ * @param[in] max_Jpower: maximum amount of power integrals used.
+ *
+ * @details Constructs the complete complex Schrodinger semigroup on a uniform grid.
+ *
+ */
 template <int D>
 TimeEvolutionOperator<D>::TimeEvolutionOperator(const MultiResolutionAnalysis<D> &mra, double prec, double time, int finest_scale, int max_Jpower)
         : ConvolutionOperator<D>(mra, mra.getRootScale(), -10) {
@@ -99,21 +109,6 @@ TimeEvolutionOperator<D>::TimeEvolutionOperator(const MultiResolutionAnalysis<D>
     this->initOperExp(1);
     Printer::setPrintLevel(oldlevel);
 }
-
-/** @brief An adaptive constructor for TimeEvolutionOperator class.
- *
- * @param[in] mra: MRA.
- * @param[in] prec: precision.
- * @param[in] time: the time moment (step).
- * @param[in] max_Jpower: maximum amount of power integrals used.
- *
- * @details Adaptively constructs either real or imaginary part of the Schrodinger semigroup at a given time moment.
- * It is recommended for use in case of high polynomial order in use of the scaling basis.
- *
- * @note For technical reasons the operator tree is constructed no deeper than to scale \f$ n = 18 \f$.
- * This should be weakened in future.
- *
- */
 
 /** @brief Creates the complex operator
  *
@@ -200,7 +195,7 @@ template <int D> void TimeEvolutionOperator<D>::initialize(double time, int fine
  *
  */
 template <int D> void TimeEvolutionOperator<D>::initializeSemiUniformly(double time, int max_Jpower) {
-    MSG_ERROR("Not implemented yet method.");
+    MSG_ABORT("Not implemented");
 
     double o_prec = this->build_prec;
     auto o_mra = this->getOperatorMRA();

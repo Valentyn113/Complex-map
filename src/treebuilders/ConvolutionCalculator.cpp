@@ -306,7 +306,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::applyOperator(int
     double **oData = os.getOperData();
     ComplexDouble **oData_cplx = os.getOperDataCplx();
 
-    // The expansion is real or complex, never both; pick the band accordingly.
+    // Select the active coefficient representation.
     const bool oper_cplx = this->oper->iscomplex();
 
     for (int d = 0; d < D; d++) {
@@ -378,7 +378,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::tensorApplyOperCo
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> f(aux[i], os.kp1, os.kp1_dm1);
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> g(aux[i + 1], os.kp1_dm1, os.kp1);
         if (oData[i] != nullptr) {
-            Eigen::Map<MatrixXd> op(oData[i], os.kp1, os.kp1);
+            Eigen::Map<const MatrixXd> op(oData[i], os.kp1, os.kp1);
             if (i == D - 1) { // Last dir: Add up into g
                 g.noalias() += f.transpose() * op;
             } else {
@@ -386,9 +386,7 @@ template <int D, typename T> void ConvolutionCalculator<D, T>::tensorApplyOperCo
             }
         } else if (oData_cplx[i] != nullptr) {
             if constexpr (std::is_same<T, ComplexDouble>::value) {
-                // A complex kernel: the band multiplies a complex intermediate,
-                // the same mixed-scalar product math_utils::apply_filter uses.
-                Eigen::Map<Eigen::MatrixXcd> op(oData_cplx[i], os.kp1, os.kp1);
+                Eigen::Map<const Eigen::MatrixXcd> op(oData_cplx[i], os.kp1, os.kp1);
                 if (i == D - 1) {
                     g.noalias() += f.transpose() * op;
                 } else {

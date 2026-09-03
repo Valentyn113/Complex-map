@@ -62,21 +62,13 @@ public:
 
     /** @brief Whether the operator stores real coefficients.
      *
-     * @details The expansion is held in one scalar or the other, never both:
-     * - `isreal()` means the terms live in `oper_exp` as `OperatorTree<double>`
-     * - `iscomplex()` means they live in `oper_exp_cplx` as `OperatorTree<ComplexDouble>`
-     * - only `TimeEvolutionOperator` builds a complex expansion
-     *
-     * @note Follows the `isreal`/`iscomplex` convention of `CompFunctionData`,
-     * which likewise holds a function in one scalar or the other.
+     * @note Reports the storage type, not whether the imaginary part vanishes.
      */
     int isreal() const { return this->raw_exp_cplx.empty(); }
 
     /** @brief Whether the operator stores complex coefficients.
      *
-     * @note This is the storage type, not a statement about the coefficients:
-     * a complex expansion whose imaginary part happens to vanish still reports
-     * `iscomplex()`.
+     * @note Reports the storage type, not whether any imaginary part is set.
      */
     int iscomplex() const { return not isreal(); }
 
