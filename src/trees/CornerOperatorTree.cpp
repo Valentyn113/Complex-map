@@ -81,6 +81,9 @@ template <typename T> void CornerOperatorTree<T>::calcBandWidth(double prec) {
  *
  */
 template <typename T> bool CornerOperatorTree<T>::isOutsideBand(int oTransl, int o_depth, int idx) {
+    // T is not screened: for D > 1 it is part of the mixed terms,
+    // and the pure T term is already restricted to the root in ConvolutionCalculator::calcNode.
+    if (idx == 0) return false;
     return abs(oTransl) < this->bandWidth->getWidth(o_depth, idx);
 }
 
