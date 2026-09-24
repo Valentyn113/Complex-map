@@ -135,4 +135,60 @@ TEST_CASE("Apply Schrodinger's evolution operator on a uniform grid", "[apply_sc
     REQUIRE(error.getSquareNorm() == Catch::Approx(0.0).margin(tolerance));
 }
 
+template <int D> ComplexDouble product_solution(const mrcpp::Coord<D> &r, double x0, double t, double sigma) {
+    ComplexDouble v = 1.0;
+    for (int d = 0; d < D; d++) v *= mrcpp::free_particle_analytical_solution(r[d], x0, t, sigma);
+    return v;
+}
+
+template <int D> void applySchrodinger(double prec) {
+    const auto min_scale = 0;
+    const auto max_depth = 25;
+    const auto order = 4;
+
+    double t1 = 0.001;
+    double delta_t = 0.03;
+    double t2 = delta_t + t1;
+
+    auto basis = mrcpp::LegendreBasis(order);
+    auto world = mrcpp::BoundingBox<D>(min_scale);
+    auto MRA = mrcpp::MultiResolutionAnalysis<D>(world, basis, max_depth);
+
+    // One operator tree shared by all directions
+    mrcpp::TimeEvolutionOperator<D> Exp(MRA, prec, delta_t, 7);
+    REQUIRE(Exp.iscomplex());
+    REQUIRE(Exp.size() == 1);
+
+    double sigma = 0.02;
+    double x0 = 0.5;
+
+    auto f = [sigma, x0, t = t1](const mrcpp::Coord<D> &r) -> ComplexDouble { return product_solution<D>(r, x0, t, sigma); };
+    auto g = [sigma, x0, t = t2](const mrcpp::Coord<D> &r) -> ComplexDouble { return product_solution<D>(r, x0, t, sigma); };
+
+    mrcpp::FunctionTree<D, ComplexDouble> f_tree(MRA);
+    mrcpp::project<D, ComplexDouble>(prec, f_tree, f);
+    mrcpp::FunctionTree<D, ComplexDouble> g_tree(MRA);
+    mrcpp::project<D, ComplexDouble>(prec, g_tree, g);
+
+    mrcpp::FunctionTree<D, ComplexDouble> fout_tree(MRA);
+    mrcpp::apply<D, ComplexDouble>(prec, fout_tree, Exp, f_tree, -1, false);
+
+    // Norm against the exact solution
+    REQUIRE(fout_tree.getSquareNorm() == Catch::Approx(g_tree.getSquareNorm()).epsilon(prec));
+
+    // Agreement with the analytic solution at the later time
+    mrcpp::FunctionTree<D, ComplexDouble> error(MRA);
+    mrcpp::add<D, ComplexDouble>(prec, error, {1.0, 0.0}, fout_tree, {-1.0, 0.0}, g_tree, -1, false, false);
+    double tolerance = prec * prec / 25.0;
+    REQUIRE(error.getSquareNorm() == Catch::Approx(0.0).margin(tolerance));
+}
+
+TEST_CASE("Apply Schrodinger's evolution operator in 2D", "[apply_schrodinger_2d], [schrodinger_evolution_operator], [mw_operator]") {
+    applySchrodinger<2>(1.0e-5);
+}
+
+TEST_CASE("Apply Schrodinger's evolution operator in 3D", "[apply_schrodinger_3d], [schrodinger_evolution_operator], [mw_operator]") {
+    applySchrodinger<3>(1.0e-4);
+}
+
 } // namespace schrodinger_evolution_operator
